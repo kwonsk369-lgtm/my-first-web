@@ -1,0 +1,14 @@
+# 로그인 토큰 등 개인 인증 정보 (절대 올리지 않기)
+.clasprc.json
+**/.clasprc.json
+.env
+*.env
+secrets*.json
+credentials*.json
+
+# 개인 메모·원본 자료
+*.xlsx
+*.xls
+*.pdf
+.DS_Store
+node_modules/
