@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{
+    --bg:#f4f5f7; --card:#fff; --ink:#16181d; --sub:#5b6170; --line:#e4e6eb;
+    --accent:#1f4fd8; --accent-soft:#e9efff; --up:#c2410c; --down:#047857;
+    --warn:#fff7e6; --warn-line:#f5c26b; --radius:14px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:14px;line-height:1.55}
+  header{background:#0f1729;color:#fff;padding:22px 28px 18px}
+  header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:-.2px}
+  header p{margin:4px 0 0;color:#aab3c5;font-size:13px}
+  nav{position:sticky;top:0;z-index:1000;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;gap:4px;padding:8px 20px;overflow-x:auto}
+  nav a{color:var(--sub);text-decoration:none;padding:6px 12px;border-radius:999px;white-space:nowrap;font-weight:500}
+  nav a:hover{background:var(--accent-soft);color:var(--accent)}
+  main{max-width:1240px;margin:0 auto;padding:22px 20px 60px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;min-width:0}
+  .wide{grid-column:1/-1}
+  .card-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+  .card-h h2{margin:0;font-size:16px;font-weight:700}
+  .num{display:inline-block;width:22px;height:22px;border-radius:6px;background:var(--accent);color:#fff;font-size:12px;text-align:center;line-height:22px;margin-right:8px;font-weight:700}
+  .meta{color:var(--sub);font-size:12px;margin-top:2px}
+  .btn{border:1px solid var(--accent);background:var(--accent);color:#fff;border-radius:9px;padding:7px 14px;font:inherit;font-weight:600;cursor:pointer;white-space:nowrap}
+  .btn:disabled{opacity:.55;cursor:wait}
+  .btn.ghost{background:#fff;color:var(--accent)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  th{background:#f8f9fb;color:var(--sub);font-weight:600;font-size:12.5px}
+  th:first-child,td:first-child,.l{text-align:left}
+  tr:last-child td{border-bottom:none}
+  td.hl,th.hl{background:var(--accent-soft);color:#13307f;font-weight:700}
+  .up{color:var(--up)} .down{color:var(--down)}
+  .chip{display:inline-block;padding:2px 9px;border-radius:999px;background:#eef0f4;color:var(--sub);font-size:12px;margin:0 4px 4px 0;cursor:pointer;border:1px solid transparent}
+  .chip.on{background:var(--accent-soft);color:var(--accent);border-color:#c9d6ff;font-weight:600}
+  .note{font-size:12px;color:var(--sub);margin-top:10px}
+  .warn{background:var(--warn);border:1px solid var(--warn-line);border-radius:10px;padding:9px 12px;font-size:12.5px;margin:8px 0}
+  .stamp{display:inline-flex;align-items:center;gap:6px;background:#eefaf3;color:#065f46;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600}
+  .stamp.off{background:#f1f2f4;color:var(--sub)}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  input,select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:#fff}
+  input[type=text]{flex:1;min-width:220px}
+  #map{height:440px;border-radius:10px;border:1px solid var(--line);margin-top:12px}
+  .split{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}
+  details summary{cursor:pointer;color:var(--sub);font-size:12px;margin-top:10px}
+  .q-card{border:1px solid var(--line);border-radius:12px;padding:18px}
+  .q-src{font-size:12px;color:var(--accent);font-weight:600}
+  .q-text{font-size:15.5px;font-weight:600;margin:6px 0 12px}
+  .opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px 12px;margin:6px 0;font:inherit;cursor:pointer}
+  .opt:hover{border-color:#b9c7f5}
+  .opt:disabled{color:var(--ink);cursor:default}
+  .opt.ok{border-color:#16a34a;background:#f0fdf4}
+  .opt.ng{border-color:#dc2626;background:#fef2f2}
+  .explain{margin-top:10px;padding:10px 12px;border-radius:10px;background:#f8f9fb;font-size:13px}
+  .bar{height:6px;background:#eef0f4;border-radius:999px;overflow:hidden;margin:6px 0 14px}
+  .bar>i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+  .score{font-size:28px;font-weight:800}
+  .loading{color:var(--sub);font-size:13px;padding:12px 0}
+  .rate-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:14px}
+  .rcard{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:#fff;min-width:0}
+  .rcard.full{grid-column:1/-1}
+  .rcard h3{margin:0 0 4px;font-size:15px;display:flex;gap:8px;align-items:center}
+  .rcard h3 .tag{font-size:11px;font-weight:600;color:#1f4fd8;background:var(--accent-soft);border-radius:999px;padding:1px 8px}
+  .rcard .formula{font-size:12.5px;color:#374151;background:#f6f7f9;border-radius:8px;padding:5px 9px;margin:6px 0 8px;display:inline-block}
+  .rt{width:100%;border-collapse:collapse;font-size:13px}
+  .rt td{border:1px solid #e3e6ec;padding:6px 8px;text-align:center;white-space:pre-line;line-height:1.35;vertical-align:middle}
+  .rt td.hd{background:#f3f4f8;color:#374151;font-weight:600;font-size:12.5px}
+  .rt td.lb{background:#fbfbf4;text-align:left;font-weight:600}
+  .rt td.nv{font-weight:700;color:#111;font-variant-numeric:tabular-nums;font-size:13.5px}
+  .rt td.nv.red{color:#c2410c}
+  .rt tr:hover td{background-image:linear-gradient(rgba(31,79,216,.05),rgba(31,79,216,.05))}
+  .rnotes{margin:8px 0 0;padding:0;list-style:none;font-size:12px;color:#4b5563}
+  .rnotes li{margin:3px 0;padding-left:2px}
+  .calc-grid{display:grid;grid-template-columns:118px 1fr;gap:7px 8px;align-items:center}
+  .calc-grid label{font-size:12.5px;color:var(--sub);font-weight:600}
+  .calc-grid input,.calc-grid select{width:100%;min-width:0}
+  .rate-tables{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-top:10px}
+  .rate-tables h4{margin:0 0 6px;font-size:13.5px}
+  .rate-tables td,.rate-tables th{padding:5px 8px;font-size:12.5px}
+  td.pick{background:#ffe9a8 !important;font-weight:800;color:#7a4a00}
+  .res-tbl td{white-space:normal}
+  .big{font-size:20px;font-weight:800;color:var(--accent)}
+  @media(max-width:900px){main{grid-template-columns:1fr}.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1><?= appTitle ?></h1>
+  <p>배전공사 노임단가 · 엔지니어링 임금 · 순환골재 단가 · 사토장 거리 · 업무기준 퀴즈를 한 화면에서</p>
+</header>
+<nav>
+  <a href="#c1">① 배전공사 노임단가</a><a href="#c4">② 엔지니어링 임금(전기)</a>
+  <a href="#c2">③ 순환골재 단가</a><a href="#c3">④ 대구·경북 사토장</a><a href="#c6">⑤ 제비율 적용기준</a><a href="#c5">⑥ 업무기준 퀴즈</a>
+</nav>
+
+<main>
+  <!-- ① 노임단가 -->
+  <section class="card wide" id="c1">
+    <div class="card-h">
+      <div><h2><span class="num">1</span>배전공사 노임단가 (최근 2개년)</h2>
+        <div class="meta" id="laborMeta"></div></div>
+    </div>
+    <div class="tbl-wrap"><table id="laborTbl"></table></div>
+    <div class="note">단위: 원/일 (1일 8시간 기준) · 증감은 직전 공표(2026 상반기) 대비 · <span id="laborNext"></span></div>
+  </section>
+
+  <!-- ② 엔지니어링 -->
+  <section class="card wide" id="c4">
+    <div class="card-h">
+      <div><h2><span class="num">2</span>엔지니어링 임금실태조사 · 전기부문</h2>
+        <div class="meta">초급·중급숙련기술자 1인 1일 평균임금</div></div>
+      <button class="btn" id="engBtn" onclick="refreshEng()">최신 단가 불러오기</button>
+    </div>
+    <div id="engStamp"></div>
+    <div id="engWarn"></div>
+    <div class="tbl-wrap"><table id="engTbl"></table></div>
+    <div class="note" id="engNote"></div>
+  </section>
+
+  <!-- ③ 순환골재 -->
+  <section class="card wide" id="c2">
+    <div class="card-h">
+      <div><h2><span class="num">3</span>순환골재 단가 · 한국건설자원협회</h2>
+        <div class="meta">koras.org 순환골재 판매정보 · 업체별 보유량(톤)과 단가(원)</div></div>
+      <button class="btn" id="korasBtn" onclick="refreshKoras()">새로 불러오기</button>
+    </div>
+    <div id="korasStamp"></div>
+    <div id="korasBody" class="loading">아직 불러온 자료가 없습니다. ‘새로 불러오기’를 눌러 주세요.</div>
+  </section>
+
+  <!-- ④ 사토장 -->
+  <section class="card wide" id="c3">
+    <div class="card-h">
+      <div><h2><span class="num">4</span>대구·경북 사토장 주소</h2>
+        <div class="meta">공공데이터포털 오픈API(국토교통부 토석정보)에서 대구·경북 사토장 주소를 정리</div></div>
+      <div class="row"><span id="dumpStamp"></span><button class="btn" id="apiBtn" onclick="refreshApi()">공공데이터에서 새로 불러오기</button></div>
+    </div>
+    <div class="explain" style="margin-top:4px">출처: 공공데이터포털 「국토교통부_토석정보공유시스템 토석정보공유서비스」 · 사토장, 토취장, 골재업체정보(<code>/SoilComList</code>). 버튼을 누르거나 매주 월요일 자동으로 새로 받아 대구·경북 주소만 저장합니다. <span id="apiState"></span>
+      <details style="margin-top:4px"><summary>불러오기 기록</summary><div class="meta" id="apiLog"></div></details></div>
+    <div class="row" style="margin:12px 0 6px">
+      <span class="meta">지역</span><select id="dumpArea" onchange="renderDumps()"><option value="all">대구·경북 전체</option><option value="dg">대구광역시</option><option value="gb">경상북도</option></select>
+      <select id="dumpSigungu" onchange="renderDumps()"><option value="">시·군·구 전체</option></select>
+      <select id="dumpKind" onchange="renderDumps()"><option value="사토장">사토장만</option><option value="사토장|토취장">사토장+토취장</option><option value="">전체 구분</option></select>
+      <input type="text" id="dumpQ" placeholder="업체명·주소 검색" oninput="renderDumps()" style="min-width:180px">
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <input type="text" id="addr" placeholder="(선택) 기준 주소를 넣으면 각 사토장까지 실제 도로 이동거리를 계산합니다 예) 경북 구미시 백산로 166" onkeydown="if(event.key==='Enter')calcDist()">
+      <button class="btn ghost" id="distBtn" onclick="calcDist()">도로거리 계산</button>
+    </div>
+    <div id="dumpBody" class="loading">불러오는 중…</div>
+  </section>
+
+  <!-- ⑥ 제비율 -->
+  <section class="card wide" id="c6">
+    <div class="card-h">
+      <div><h2><span class="num">5</span>간접공사비(제비율) 적용기준 · 건축·산업환경설비공사</h2>
+        <div class="meta" id="rateSub">한국표준품셈정보원 자료실</div></div>
+      <div class="row">
+        <a class="btn" id="rateDl" href="#" target="_blank" style="text-decoration:none">⬇ 원본 엑셀 다운로드</a>
+        <button class="btn ghost" id="rateBtn" onclick="checkRate()">최신 자료 확인</button>
+        <label class="btn ghost" style="cursor:pointer">엑셀 직접 올리기<input type="file" id="rateFile" accept=".xlsx" style="display:none" onchange="uploadRate(this)"></label>
+      </div>
+    </div>
+    <div id="rateBadge"></div>
+    <div id="rateWarn"></div>
+    <div class="row" style="margin:6px 0 10px;gap:6px">
+      <span class="chip on" id="rvCards" onclick="rateView('cards')">항목별 보기</span><span class="chip" id="rvOrig" onclick="rateView('orig')">원본 배치 보기</span>
+      <input type="text" id="rateQ" placeholder="항목 검색 (예: 산업안전, 고용보험)" oninput="renderRateCards()" style="min-width:240px">
+    </div>
+    <div id="rateToc" style="margin-bottom:10px"></div>
+    <div id="rateCards" class="rate-cards"></div>
+    <div id="rateOrig" style="display:none">
+      <div class="row" style="margin:0 0 8px;gap:6px"><span class="meta">표 크기</span>
+        <button class="chip" onclick="rateZoom(-0.1)">－</button><span class="meta" id="rateZoomLbl">100%</span><button class="chip" onclick="rateZoom(0.1)">＋</button>
+        <button class="chip" onclick="rateFit()">화면에 맞춤</button></div>
+      <div id="rateWrap" class="tbl-wrap" style="max-height:780px;overflow:auto;background:#fff"><div id="rateBox" class="loading">불러오는 중…</div></div>
+    </div>
+    <details style="margin-top:8px"><summary>갱신 기록</summary><div class="meta" id="rateLog"></div></details>
+  </section>
+
+  <!-- ⑤ 퀴즈 -->
+  <section class="card wide" id="c5">
+    <div class="card-h">
+      <div><h2><span class="num">6</span>업무기준 퀴즈</h2>
+        <div class="meta">업로드한 5개 기준서(기본공급약관·영업업무처리지침·전기계기업무기준·분산형전원 계량장치 시설지침·배전선로 이설업무 기준)에서 출제</div></div>
+      <div class="row">
+        <select id="qDoc"></select>
+        <select id="qCount"><option value="5">5문제</option><option value="10" selected>10문제</option><option value="20">20문제</option></select>
+        <button class="btn" onclick="startQuiz()">새 퀴즈</button>
+      </div>
+    </div>
+    <div id="quizBox"></div>
+  </section>
+</main>
+
+<script>
+var STATE = {};
+var fmt = function(n){ return n==null||n==='' ? '–' : Number(n).toLocaleString('ko-KR'); };
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); };
+function pct(a,b){ if(!a||!b) return ''; var p=(a-b)/b*100; var cls=p>0?'up':(p<0?'down':''); return '<span class="'+cls+'">'+(p>0?'▲':p<0?'▼':'')+Math.abs(p).toFixed(2)+'%</span>'; }
+
+function init(){
+  google.script.run.withSuccessHandler(function(d){
+    STATE = d;
+    renderLabor(d.labor); renderEng(d.eng); renderKoras(d.koras); renderDumps();
+  }).withFailureHandler(showErr).getInitialData();
+}
+
+function showErr(e){ alert('오류: ' + (e && e.message ? e.message : e)); }
+function busy(id,on,label){ var b=document.getElementById(id); b.disabled=on; if(label) b.textContent=label; }
+
+/* ① 노임단가 */
+function renderLabor(L){
+  document.getElementById('laborMeta').textContent = L.source + ' · 공표 ' + L.published;
+  document.getElementById('laborNext').textContent = '다음 공표: ' + L.nextRelease;
+  var h = '<tr><th>직종번호</th><th class="l">직종</th>' + L.periodLabels.map(function(p,i){
+    return '<th'+(i===0?' class="hl"':'')+'>'+p+'<br><span style="font-weight:400">('+L.periods[i]+')</span></th>'; }).join('') + '<th>증감</th></tr>';
+  L.rows.forEach(function(r){
+    h += '<tr><td>'+r.code+'</td><td class="l"><b>'+r.name+'</b></td>' + r.v.map(function(v,i){
+      return '<td'+(i===0?' class="hl"':'')+'>'+fmt(v)+'</td>'; }).join('') + '<td>'+pct(r.v[0], r.v[1])+'</td></tr>';
+  });
+  document.getElementById('laborTbl').innerHTML = h;
+}
+
+/* ② 엔지니어링 */
+function renderEng(E){
+  var st = document.getElementById('engStamp');
+  st.innerHTML = E.fetchedAt
+    ? '<span class="stamp">● 최신 불러온 날짜 '+esc(E.fetchedAt)+'</span>'
+    : '<span class="stamp off">● 내장 기본값 (버튼을 누르면 최신값을 불러옵니다)</span>';
+  document.getElementById('engWarn').innerHTML = E.lastError ? '<div class="warn">'+esc(E.lastError)+'</div>' : '';
+  var y = E.years, grades = ['중급숙련기술자','초급숙련기술자'];
+  var h = '<tr><th class="l">기술등급</th>' + y.map(function(x,i){
+    return '<th'+(i===0?' class="hl"':'')+'>'+x.year+'년<br><span style="font-weight:400">적용 '+x.applyDate+'</span></th>'; }).join('')
+    + '<th>증감액</th><th>증감률</th><th>월 환산(×20.3일)</th></tr>';
+  grades.forEach(function(g){
+    var a=y[0].grades[g], b=y[1]&&y[1].grades[g];
+    h += '<tr><td class="l"><b>'+g+'</b> (전기)</td>' + y.map(function(x,i){ return '<td'+(i===0?' class="hl"':'')+'>'+fmt(x.grades[g])+'</td>'; }).join('')
+      + '<td>'+(a&&b?(a-b>0?'+':'')+fmt(a-b):'–')+'</td><td>'+pct(a,b)+'</td><td>'+fmt(Math.round(a*20.3))+'</td></tr>';
+  });
+  document.getElementById('engTbl').innerHTML = h;
+  document.getElementById('engNote').innerHTML = '단위: 원/일 · 출처: '+esc(E.source)+'<br>'+ y.map(function(x){return x.year+'년: '+esc(x.note);}).join(' · ')
+    + '<br>월 환산은 2026년 적용 월평균 근무일수 20.3일 기준 참고값입니다.';
+}
+function refreshEng(){
+  busy('engBtn',true,'불러오는 중…');
+  google.script.run.withSuccessHandler(function(d){ busy('engBtn',false,'최신 단가 불러오기'); STATE.eng=d; renderEng(d); })
+    .withFailureHandler(function(e){ busy('engBtn',false,'최신 단가 불러오기'); showErr(e); }).refreshEngWage();
+}
+
+/* ③ 순환골재 */
+var KSEL = { sido:'전체', col:1 };
+function refreshKoras(){
+  busy('korasBtn',true,'16개 시도 불러오는 중…');
+  google.script.run.withSuccessHandler(function(d){ busy('korasBtn',false,'새로 불러오기'); STATE.koras=d; renderKoras(d); })
+    .withFailureHandler(function(e){ busy('korasBtn',false,'새로 불러오기'); showErr(e); }).refreshKoras();
+}
+function stats(arr){
+  if(!arr.length) return null; arr=arr.slice().sort(function(a,b){return a-b;});
+  var sum=arr.reduce(function(s,x){return s+x;},0), mid=Math.floor(arr.length/2);
+  return {n:arr.length,min:arr[0],max:arr[arr.length-1],avg:Math.round(sum/arr.length),med:arr.length%2?arr[mid]:Math.round((arr[mid-1]+arr[mid])/2)};
+}
+function renderKoras(K){
+  var stamp = document.getElementById('korasStamp'), body = document.getElementById('korasBody');
+  if(!K){ stamp.innerHTML='<span class="stamp off">● 불러온 기록 없음</span>'; return; }
+  stamp.innerHTML = '<span class="stamp">● 최신 불러온 날짜 '+esc(K.fetchedAt)+'</span>'
+    + (K.errors&&K.errors.length?' <span class="meta">일부 지역 오류: '+esc(K.errors.join(', '))+'</span>':'');
+  body.className='';
+  var sidos = ['전체']; K.rows.forEach(function(r){ if(sidos.indexOf(r.sido)<0) sidos.push(r.sido); });
+  // 품목별 전국 요약
+  var h = '<div class="meta" style="margin:8px 0 6px">품목별 단가 요약 (단가가 표기된 업체 기준, 원)</div><div class="tbl-wrap"><table><tr><th class="l">품목</th><th>업체 수</th><th>최저</th><th>중앙값</th><th>평균</th><th>최고</th><th>총 보유량(톤)</th></tr>';
+  var rowsSel = K.rows.filter(function(r){ return KSEL.sido==='전체'||r.sido===KSEL.sido; });
+  K.cols.forEach(function(c,i){
+    var s = stats(rowsSel.map(function(r){return r.items[i].price;}).filter(function(p){return p>0;}));
+    var qty = rowsSel.reduce(function(t,r){return t+(r.items[i].qty||0);},0);
+    h += '<tr><td class="l"><b>'+c+'</b></td>' + (s? '<td>'+s.n+'</td><td>'+fmt(s.min)+'</td><td class="hl">'+fmt(s.med)+'</td><td>'+fmt(s.avg)+'</td><td>'+fmt(s.max)+'</td>' : '<td colspan="5" style="text-align:center;color:#999">단가 표기 없음</td>') + '<td>'+fmt(qty)+'</td></tr>';
+  });
+  h += '</table></div>';
+  // 필터
+  h += '<div style="margin:14px 0 6px"><span class="meta">시도: </span>' + sidos.map(function(s){ return '<span class="chip'+(s===KSEL.sido?' on':'')+'" onclick="KSEL.sido=\''+s+'\';renderKoras(STATE.koras)">'+s+'</span>'; }).join('') + '</div>';
+  h += '<div style="margin:0 0 8px"><span class="meta">정렬 품목: </span>' + K.cols.map(function(c,i){ return '<span class="chip'+(i===KSEL.col?' on':'')+'" onclick="KSEL.col='+i+';renderKoras(STATE.koras)">'+c+'</span>'; }).join('') + '</div>';
+  var list = rowsSel.slice().sort(function(a,b){ var x=a.items[KSEL.col].price||1e12, y=b.items[KSEL.col].price||1e12; return x-y; });
+  h += '<div class="tbl-wrap" style="max-height:420px;overflow:auto"><table><tr><th class="l">시도</th><th class="l">시군구</th><th class="l">업체</th>' + K.cols.map(function(c,i){return '<th'+(i===KSEL.col?' class="hl"':'')+'>'+c+'<br><span style="font-weight:400">단가 / 보유량</span></th>';}).join('') + '</tr>';
+  list.forEach(function(r){
+    h += '<tr><td class="l">'+esc(r.sido)+'</td><td class="l">'+esc(r.sigungu)+'</td><td class="l">'+esc(r.company)+'</td>' + r.items.map(function(it,i){
+      return '<td'+(i===KSEL.col?' class="hl"':'')+'>'+(it.price?'<b>'+fmt(it.price)+'</b>':'<span style="color:#aaa">–</span>')+'<br><span class="meta">'+(it.qty?fmt(it.qty)+'톤':'')+'</span></td>'; }).join('') + '</tr>';
+  });
+  h += '</table></div><div class="note">단가는 각 업체가 koras.org에 등록한 값 그대로이며 단위·운반비 포함 여부는 업체에 확인하세요. 협회 시험 입력 행(한국건설자원협회)은 제외했습니다. 출처: '+esc(K.source)+'</div>';
+  body.innerHTML = h;
+}
+
+/* ④ 대구·경북 사토장 */
+var DUMP_CENTERS = [['대구',35.8714,128.6014],['구미',36.1195,128.3446],['김천',36.1398,128.1136],['상주',36.4110,128.1590],['문경',36.5866,128.1867],
+  ['안동',36.5684,128.7294],['영주',36.8057,128.6240],['의성',36.3527,128.6970],['영천',35.9733,128.9386],['경주',35.8562,129.2247],
+  ['포항',36.0190,129.3435],['영덕',36.4150,129.3650],['울진',36.9930,129.4004],['청송',36.4359,129.0571],['고령',35.7260,128.2630]];
+var DIST = {};
+function isDG(a){ return /^\s*(대구)/.test(a); }
+function isGB(a){ return /^\s*(경북|경상북도)/.test(a); }
+function sigunguOf(a){ var t=String(a||'').trim().split(/\s+/); return t[1]||''; }
+function dumpFiltered(){
+  var rows=(STATE.dumps&&STATE.dumps.rows)||[], area=document.getElementById('dumpArea').value,
+      kind=document.getElementById('dumpKind').value, sg=document.getElementById('dumpSigungu').value,
+      q=document.getElementById('dumpQ').value.trim();
+  return rows.filter(function(r){
+    if(!(isDG(r.address)||isGB(r.address))) return false;
+    if(area==='dg'&&!isDG(r.address)) return false;
+    if(area==='gb'&&!isGB(r.address)) return false;
+    if(kind && !new RegExp(kind).test(r.kind)) return false;
+    if(sg && sigunguOf(r.address)!==sg) return false;
+    if(q && (r.name+' '+r.address).indexOf(q)<0) return false;
+    return true;
+  });
+}
+function renderDumps(){
+  var D=STATE.dumps||{rows:[]};
+  document.getElementById('dumpStamp').innerHTML = D.apiAt ? '<span class="stamp">● 기준: '+esc(D.apiAt)+' 공공데이터 수신 · 대구·경북 '+D.rows.length+'건'+(D.apiTotal?' (전국 '+D.apiTotal+'건 중)':'')+'</span>' : '<span class="stamp off">● 아직 불러오지 않음</span>';
+  document.getElementById('apiState').innerHTML = D.apiError ? '<span style="color:#b45309">'+esc(D.apiError)+'</span>' : '';
+  document.getElementById('apiLog').innerHTML=(D.apiLog||[]).map(esc).join('<br>')||'-';
+  // 시군구 목록
+  var area=document.getElementById('dumpArea').value, sel=document.getElementById('dumpSigungu'), cur=sel.value, sgs={};
+  D.rows.forEach(function(r){ if((area!=='gb'&&isDG(r.address))||(area!=='dg'&&isGB(r.address))){ var g=sigunguOf(r.address); if(g) sgs[g]=1; } });
+  sel.innerHTML='<option value="">시·군·구 전체</option>'+Object.keys(sgs).sort().map(function(g){return '<option'+(g===cur?' selected':'')+'>'+esc(g)+'</option>';}).join('');
+  var list=dumpFiltered(), hasDist=Object.keys(DIST).length>0;
+  var dv=function(r){ var d=DIST[r.name+'|'+r.address]; return !d?1e9:(d.road!=null?d.road:(d.line!=null?d.line+1e6:1e9)); };
+  if(hasDist) list.sort(function(a,b){ return dv(a)-dv(b); });
+  else list.sort(function(a,b){ return a.address<b.address?-1:1; });
+  var body=document.getElementById('dumpBody'); body.className='';
+  if(!D.rows.length){ body.innerHTML='<div class="warn">아직 불러온 목록이 없습니다. 위 ‘공공데이터에서 새로 불러오기’를 눌러 주세요.</div>'; return; }
+  if(!list.length){ body.innerHTML='<div class="warn">조건에 맞는 대구·경북 사토장이 없습니다. 구분을 ‘전체’로 바꾸거나 다른 지역 엑셀을 추가해 보세요.</div>'; return; }
+  var h='<div class="meta" style="margin-bottom:6px">'+list.length+'곳</div><div class="tbl-wrap" style="max-height:460px;overflow:auto"><table><tr>'+(hasDist?'<th>도로거리</th><th>소요시간</th><th>직선거리</th>':'')+'<th class="l">구분</th><th class="l">업체명</th><th class="l">주소</th><th class="l">대표자·담당자</th><th class="l">연락처·공시기간</th><th class="l">출처</th></tr>';
+  list.forEach(function(r){ var d=DIST[r.name+'|'+r.address];
+    h+='<tr>'+(hasDist?'<td class="hl">'+(!d?'–':d.road!=null?'<b>'+d.road+' km</b>':'<span style="color:#b45309;font-size:12px">'+esc(d.err||'계산 실패')+'</span>')+'</td><td>'+(d&&d.min!=null?(d.min>=60?Math.floor(d.min/60)+'시간 ':'')+(d.min%60)+'분':'–')+'</td><td class="meta">'+(d&&d.line!=null?d.line+' km':'–')+'</td>':'')+'<td class="l">'+esc(r.kind)+'</td><td class="l"><b>'+esc(r.name)+'</b></td><td class="l" style="white-space:normal">'+esc(r.address)+'</td><td class="l">'+esc([r.ceo,r.manager].filter(Boolean).join(' / '))+'</td><td class="l">'+esc(r.tel||r.period||'')+'</td><td class="l meta">'+esc(r.src||'파일')+'</td></tr>'; });
+  h+='</table></div><div class="note">출처: 국토교통부 토석정보공유시스템 · 공공데이터포털 오픈API. 위 ‘기준’ 시각에 받은 자료입니다.'+(hasDist?' 도로거리·소요시간은 네이버 길찾기(자동차, 실시간 최적 경로) 기준이며 교통상황에 따라 달라집니다. 직선거리는 참고용입니다.':'')+'</div>';
+  body.innerHTML=h;
+}
+function refreshApi(){
+  busy('apiBtn',true,'불러오는 중…');
+  google.script.run.withSuccessHandler(function(d){ busy('apiBtn',false,'공공데이터에서 새로 불러오기'); STATE.dumps=d; DIST={}; renderDumps();
+      alert('공공데이터포털에서 '+d.apiCount+'건을 받았습니다.'); })
+    .withFailureHandler(function(e){ busy('apiBtn',false,'공공데이터에서 새로 불러오기'); alert('불러오기 실패\n\n'+(e.message||e)+'\n\n인증키(DATA_GO_KR_KEY)·활용신청 승인 여부·오퍼레이션 이름(TOCYCLE_API_OP)을 확인해 주세요.'); })
+    .refreshDumpsFromApi();
+}
+function calcDist(){
+  var a=document.getElementById('addr').value.trim(); if(!a) return alert('기준 주소를 입력해 주세요.');
+  var keys=dumpFiltered().map(function(r){return r.name+'|'+r.address;}).slice(0,150);
+  if(!keys.length) return alert('표시된 사토장이 없습니다.');
+  busy('distBtn',true,'도로 경로 계산 중…');
+  google.script.run.withSuccessHandler(function(d){ busy('distBtn',false,'도로거리 계산'); DIST=d.dist; renderDumps();
+      var fails=Object.keys(d.dist).filter(function(k){return d.dist[k].road==null;}).length;
+      document.querySelector('#dumpBody .meta').innerHTML += ' · 출발: '+esc(d.origin.label)+' · 계산 '+esc(d.at)+(fails?' · <span style="color:#b45309">도로거리 실패 '+fails+'곳</span>':''); })
+    .withFailureHandler(function(e){ busy('distBtn',false,'도로거리 계산'); showErr(e); }).calcDumpDistances(a, keys);
+}
+
+/* ⑤ 제비율 표 (엑셀 원본 렌더링) */
+var RATE=null, RZ=1;
+function loadRate(){ google.script.run.withSuccessHandler(function(t){ RATE=t; renderRate(); }).withFailureHandler(showErr).getRateTable(); }
+function checkRate(){
+  busy('rateBtn',true,'확인 중…');
+  google.script.run.withSuccessHandler(function(t){ busy('rateBtn',false,'최신 자료 확인'); RATE=t; renderRate();
+      if(t.meta.lastError) alert(t.meta.lastError); })
+    .withFailureHandler(function(e){ busy('rateBtn',false,'최신 자료 확인'); showErr(e); }).checkRateUpdate(true);
+}
+function uploadRate(inp){
+  var f=inp.files[0]; if(!f) return;
+  var pin = STATE.needPin ? prompt('업로드 비밀번호(UPLOAD_PIN)') : '';
+  var r=new FileReader(); r.onload=function(){
+    var b64=String(r.result).split(',')[1];
+    google.script.run.withSuccessHandler(function(t){ RATE=t; renderRate(); alert('기준일 '+(t.meta.basis||'(인식 못함)')+' 자료로 갱신했습니다.'); })
+      .withFailureHandler(showErr).uploadRateXlsx(b64, f.name, pin);
+  }; r.readAsDataURL(f); inp.value='';
+}
+function rateZoom(d){ RZ=Math.max(0.4,Math.min(1.6,Math.round((RZ+d)*10)/10)); applyZoom(); }
+function rateFit(){ var tb=document.getElementById('rateTbl'); if(!tb) return; RZ=Math.max(0.4,Math.min(1.6,(document.getElementById('rateWrap').clientWidth-4)/(tb.scrollWidth/RZ))); RZ=Math.floor(RZ*100)/100; applyZoom(); }
+function applyZoom(){ var tb=document.getElementById('rateTbl'); if(tb){ tb.style.zoom=RZ; } document.getElementById('rateZoomLbl').textContent=Math.round(RZ*100)+'%'; }
+function rateView(v){ document.getElementById('rateCards').style.display=v==='cards'?'':'none'; document.getElementById('rateToc').style.display=v==='cards'?'':'none';
+  document.getElementById('rateOrig').style.display=v==='orig'?'':'none';
+  document.getElementById('rvCards').classList.toggle('on',v==='cards'); document.getElementById('rvOrig').classList.toggle('on',v==='orig');
+  if(v==='orig') setTimeout(rateFit,30); }
+/* 엑셀 격자 → 항목([제목])별 블록으로 나눠 촘촘한 표로 재구성 */
+var RATE_GROUPS=[['간접노무비','기타경비'],['일반관리비','이윤'],['건강보험료','노인장기요양보험료','연금보험료'],['법정부담금','석면분담금','임금채권부담금']];
+function rateBlocks(t){
+  var cells=t.cells.filter(function(c){ return c[0]>0 && String(c[4]).trim()!==''; });
+  var isTitle=function(x){ return /^\s*\[[^\[\]]+\]\s*$/.test(x); };
+  var titles=cells.filter(function(c){ return isTitle(c[4]); }).map(function(c){ return {name:c[4].trim().replace(/^\[|\]$/g,''), r0:c[0], c0:c[1], c1:c[1]+c[3]-1, cell:c}; });
+  titles.forEach(function(T){ var nx=titles.filter(function(o){ return o!==T && o.r0>T.r0 && o.c0<=T.c1 && o.c1>=T.c0; }).map(function(o){return o.r0;});
+    T.r1=(nx.length?Math.min.apply(null,nx):t.meta.rows)-1; });
+  // 묶음
+  var blocks=[], used={};
+  RATE_GROUPS.forEach(function(g){ var mem=titles.filter(function(T){ return g.indexOf(T.name)>=0; }); if(mem.length<2) return;
+    mem.forEach(function(m){used[m.name]=1;});
+    blocks.push({names:mem.map(function(m){return m.name;}), r0:Math.min.apply(null,mem.map(function(m){return m.r0;})), r1:Math.max.apply(null,mem.map(function(m){return m.r1;})),
+      c0:Math.min.apply(null,mem.map(function(m){return m.c0;})), c1:Math.max.apply(null,mem.map(function(m){return m.c1;})), titleCells:mem.map(function(m){return m.cell;})}); });
+  titles.forEach(function(T){ if(!used[T.name]) blocks.push({names:[T.name], r0:T.r0, r1:T.r1, c0:T.c0, c1:T.c1, titleCells:[T.cell]}); });
+  blocks.forEach(function(B){ B.cells=[]; });
+  cells.forEach(function(c){
+    if(blocks.some(function(B){ return B.titleCells.indexOf(c)>=0; })) return;
+    var inside=blocks.filter(function(B){ return c[0]>=B.r0&&c[0]<=B.r1&&c[1]>=B.c0&&c[1]<=B.c1; });
+    var B=inside[0];
+    if(!B){ // 제목 없는 칸(행 이름 등): 같은 행 범위의 오른쪽 가장 가까운 블록
+      var right=blocks.filter(function(B){ return c[0]>=B.r0&&c[0]<=B.r1&&B.c0>c[1]; }).sort(function(a,b){return a.c0-b.c0;});
+      var left=blocks.filter(function(B){ return c[0]>=B.r0&&c[0]<=B.r1&&B.c1<c[1]; }).sort(function(a,b){return b.c1-a.c1;});
+      B=right[0]||left[0];
+    }
+    if(B) B.cells.push(c);
+  });
+  blocks=blocks.filter(function(B){ return B.cells.length; });
+  // 빈 상위 제목(법정부담금 등)은 묶음 이름에 반영됨. 정렬
+  blocks.sort(function(a,b){ return a.r0-b.r0 || a.c0-b.c0; });
+  return blocks;
+}
+function blockHtml(B,t){
+  var S=t.styles, notes=[], formulas=[], tc=[];
+  var isNote=function(c){ var x=String(c[4]).trim(), s=S[c[5]]||{}; return /^(\*|※|□|주\d\))/.test(x) && !(s.bd&&s.bd.join('')!=='0000'&&s.bg); };
+  var isFormula=function(c){ var x=String(c[4]).trim(); return /x\s*율|x\s*요율|\)\s*x\s*[\d.]+|^\((직노|노|재|건강|직접|재\+)/.test(x) && x.length<70 && !/^\d/.test(x); };
+  B.cells.forEach(function(c){ if(isNote(c)) notes.push(c); else tc.push(c); });
+  // 맨 위 산식 줄(행 하나 전체가 산식)은 표 위 배지로
+  var rows={}; tc.forEach(function(c){ (rows[c[0]]=rows[c[0]]||[]).push(c); });
+  Object.keys(rows).map(Number).sort(function(a,b){return a-b;}).slice(0,3).forEach(function(r){
+    var rc=rows[r]; if(rc.length && rc.every(isFormula)){ rc.forEach(function(c){ formulas.push(c[4].replace(/\s*\n\s*/g,' ')); tc.splice(tc.indexOf(c),1); }); } });
+  if(!tc.length && !notes.length) return '';
+  // 압축 격자
+  var cs=[], rs=[]; tc.forEach(function(c){ cs.push(c[1],c[1]+c[3]); rs.push(c[0],c[0]+c[2]); });
+  var uniq=function(a){ return a.filter(function(v,i){return a.indexOf(v)===i;}).sort(function(x,y){return x-y;}); };
+  cs=uniq(cs); rs=uniq(rs);
+  var ci=function(v){ return cs.indexOf(v); }, ri=function(v){ return rs.indexOf(v); };
+  var R=rs.length-1, C=cs.length-1, occ=[], at={};
+  for(var i=0;i<R;i++){ occ.push(new Array(C).fill(0)); }
+  tc.forEach(function(c){ var r0=ri(c[0]), r1=ri(Math.min(c[0]+c[2],rs[R])), c0=ci(c[1]), c1=ci(c[1]+c[3]);
+    for(var i=r0;i<r1;i++) for(var j=c0;j<c1;j++) occ[i][j]=1; at[r0+','+c0]={c:c,rs:r1-r0,cs:c1-c0}; });
+  var h='<div class="tbl-wrap" style="border:none"><table class="rt">';
+  for(var i=0;i<R;i++){ h+='<tr>';
+    for(var j=0;j<C;j++){ var a=at[i+','+j];
+      if(a){ var c=a.c, s=S[c[5]]||{}, x=String(c[4]).replace(/\s*\n\s*/g,'\n').trim();
+        var num=/^[\d.,]+%?$/.test(x), bg=(s.bg||'').toLowerCase();
+        var cls = num ? 'nv'+((s.c||'').toLowerCase()==='#ff0000'?' red':'') : (bg==='#ffffcc'?'lb':(bg?'hd':''));
+        if(!num && a.cs===C && C>1 && !bg && x.length>18){ notes.push([c[0],0,0,0,x]); continue; }
+        h+='<td'+(a.rs>1?' rowspan="'+a.rs+'"':'')+(a.cs>1?' colspan="'+a.cs+'"':'')+' class="'+cls+'"'+(s.c&&!num&&!/^#0+$/.test(s.c)?' style="color:'+s.c+'"':'')+'>'+esc(x)+'</td>';
+      } else if(!occ[i][j]) h+='<td style="border:none"></td>';
+    }
+    h+='</tr>'; }
+  h+='</table></div>';
+  var wide = C>8 || B.names.indexOf('산업안전보건관리비')>=0;
+  return '<div class="rcard'+(wide?' full':'')+'" id="rb_'+esc(B.names[0])+'"><h3>'+B.names.map(esc).join(' · ')+'</h3>'
+    +formulas.map(function(f){return '<span class="formula">'+esc(f)+'</span> ';}).join('')
+    +h+(notes.length?'<ul class="rnotes">'+notes.sort(function(a,b){return a[0]-b[0];}).map(function(n){return '<li>'+esc(String(n[4]).replace(/\s+/g,' ').trim())+'</li>';}).join('')+'</ul>':'')+'</div>';
+}
+function renderRateCards(){
+  var t=RATE; if(!t||!t.cells) return;
+  var q=(document.getElementById('rateQ').value||'').trim();
+  var blocks=rateBlocks(t).filter(function(B){ return !q || B.names.join(' ').indexOf(q)>=0 || B.cells.some(function(c){return String(c[4]).indexOf(q)>=0;}); });
+  document.getElementById('rateToc').innerHTML=rateBlocks(t).map(function(B){ return '<a class="chip" style="text-decoration:none" href="#rb_'+esc(B.names[0])+'">'+B.names.map(esc).join('·')+'</a>'; }).join('');
+  document.getElementById('rateCards').innerHTML=blocks.map(function(B){return blockHtml(B,t);}).join('')||'<div class="warn">검색 결과가 없습니다.</div>';
+}
+function renderRate(){
+  var t=RATE, box=document.getElementById('rateBox');
+  if(!t||!t.cells){ box.innerHTML='<div class="warn">표 자료가 없습니다. ‘최신 자료 확인’ 또는 ‘엑셀 직접 올리기’를 해 주세요.</div>'; return; }
+  var M=t.meta, src={baseline:'내장 자료(첨부 엑셀)',auto:'자동 갱신',upload:'직접 업로드'}[M.status]||M.status;
+  document.getElementById('rateBadge').innerHTML =
+    '<div class="row" style="gap:8px;margin-bottom:6px">'
+    +'<span class="stamp" style="background:#fff1f2;color:#be123c;font-size:14px;padding:5px 12px">📌 '+esc(M.basis||'확인 필요')+' 입찰공고분부터 적용</span>'
+    +'<span class="stamp off">자료: '+esc(src)+(M.postDate?' · 게시 '+esc(M.postDate):'')+'</span>'
+    +'<span class="stamp off">파일: '+esc(M.fileName||'-')+'</span>'
+    +(M.fetchedAt?'<span class="stamp off">반영 '+esc(M.fetchedAt)+'</span>':'')
+    +(M.checkedAt?'<span class="stamp">● 마지막 확인 '+esc(M.checkedAt)+' (최신)</span>':'')
+    +(M.postUrl?'<a class="chip" style="text-decoration:none" target="_blank" href="'+esc(M.postUrl)+'">원문 게시글</a>':'')
+    +'</div>';
+  document.getElementById('rateSub').textContent=(M.title||'')+' · 시트: '+(M.sheetName||'');
+  var dl=document.getElementById('rateDl'); dl.href=M.fileUrl||M.postUrl||'https://www.kseis.co.kr/bbs/data/dataList.do';
+  dl.title=M.fileUrl?'한국표준품셈정보원 원본 첨부파일을 내려받습니다':'원본 게시글로 이동합니다';
+  renderRateCards();
+  document.getElementById('rateWarn').innerHTML = M.lastError?'<div class="warn">'+esc(M.lastError)+'</div>':'';
+  document.getElementById('rateLog').innerHTML=(M.checkLog||[]).map(esc).join('<br>')||'-';
+  var W=t.widths, S=t.styles, grid={};
+  t.cells.forEach(function(c){ (grid[c[0]]=grid[c[0]]||[]).push(c); });
+  var bw=function(x){ return x===2?'2px solid #333':x===3?'1px dashed #888':x===1?'1px solid #555':'none'; };
+  var h='<table id="rateTbl" style="table-layout:fixed;border-collapse:collapse;width:'+W.reduce(function(a,b){return a+b;},0)+'px;font-variant-numeric:normal"><colgroup>'+W.map(function(w){return '<col style="width:'+w+'px">';}).join('')+'</colgroup>';
+  for(var r=0;r<t.meta.rows;r++){
+    h+='<tr style="height:14px">';
+    (grid[r]||[]).forEach(function(c){
+      var s=S[c[5]]||{}, st='padding:1px 3px;white-space:pre-wrap;word-break:keep-all;line-height:1.25;'
+        +'font-size:'+Math.max(10,Math.round((s.sz||11)*1.15))+'px;'
+        +(s.b?'font-weight:700;':'font-weight:400;')+(s.c?'color:'+s.c+';':'color:#111;')+(s.bg?'background:'+s.bg+';':'')
+        +(s.u?'text-decoration:underline;':'')
+        +'text-align:'+(s.h==='center'||s.h==='centerContinuous'?'center':s.h==='right'?'right':s.h==='left'?'left':(/^[\d.,%-]+$/.test(c[4])?'right':'left'))+';'
+        +'vertical-align:'+(s.v==='top'?'top':s.v==='bottom'?'bottom':'middle')+';'
+        +'border-top:'+bw(s.bd[0])+';border-right:'+bw(s.bd[1])+';border-bottom:'+bw(s.bd[2])+';border-left:'+bw(s.bd[3])+';';
+      h+='<td'+(c[2]>1?' rowspan="'+c[2]+'"':'')+(c[3]>1?' colspan="'+c[3]+'"':'')+' style="'+st+'">'+esc(c[4])+'</td>';
+    });
+    h+='</tr>';
+  }
+  h+='</table>';
+  box.className=''; box.innerHTML=h; applyZoom();
+}
+loadRate();
+
+/* ⑤ 퀴즈 */
+var BANK = [
+ // 기본공급약관 (2026.8.1)
+ {d:'기본공급약관',q:'한전은 1전기사용계약에 대하여 전기를 어떻게 공급하는 것이 원칙인가?',o:['1공급방식·1공급전압·1인입','1공급방식·2공급전압·1인입','공급방식 제한 없이 1인입','고객이 원하는 수만큼 인입'],a:0,e:'제22조(공급방법): 1전기사용계약에 대하여 1공급방식, 1공급전압 및 1인입으로 공급합니다. 부득이한 경우 인입방법을 달리할 수 있습니다.'},
+ {d:'기본공급약관',q:'계약전력 1,000kW 이상 10,000kW 이하 고객의 표준 공급방식·전압은?',o:['교류 단상 220V','교류 삼상 380V','교류 삼상 22,900V','교류 삼상 154,000V'],a:2,e:'제23조 제1항 표: 1,000kW 이상 10,000kW 이하 → 교류 삼상 22,900V.'},
+ {d:'기본공급약관',q:'계약전력 10,000kW 초과 400,000kW 이하 고객의 공급전압은?',o:['22,900V','66,000V','154,000V','345,000V 이상'],a:2,e:'제23조 제1항 표: 10,000kW 초과 400,000kW 이하 → 교류 삼상 154,000V.'},
+ {d:'기본공급약관',q:'계약전력 400,000kW를 초과하는 고객의 표준 공급전압은?',o:['154,000V','교류 삼상 345,000V 이상','22,900V','66,000V'],a:1,e:'제23조 제1항 표: 400,000kW 초과 → 교류 삼상 345,000V 이상.'},
+ {d:'기본공급약관',q:'1,000kW 미만까지 저압으로 공급할 때 1전기사용계약단위의 계약전력은 얼마 미만이어야 하는가?',o:['100kW','300kW','500kW','1,000kW'],a:2,e:'제23조 제2항: 저압 공급 시 1전기사용계약단위의 계약전력이 500kW 미만이어야 합니다.'},
+ {d:'기본공급약관',q:'신설·증설 후 계약전력이 몇 kW 이하인 고객이 희망하면 조건 충족 시 22,900V로 공급할 수 있는가?',o:['10,000kW','20,000kW','40,000kW','100,000kW'],a:2,e:'제23조 제3항 제1호: 40,000kW 이하 고객이 22,900V 공급을 희망하고 변전소 공급능력·보호협조 등에 문제가 없으면 22,900V로 공급할 수 있습니다.'},
+ {d:'기본공급약관',q:'08시~22시 역률 요금 산정에서 지상역률의 기준 평균역률은?',o:['85%','90%','92%','95%'],a:2,e:'제43조: 평균역률이 92%에 미달하면 60%까지 매 1%당 기본요금의 0.2%를 추가하고, 92%를 초과하면 97%까지 매 1%당 0.2%를 감액합니다.'},
+ {d:'기본공급약관',q:'08시~22시 지상역률이 기준에 미달할 때 매 1%당 추가되는 요금은?',o:['기본요금의 0.1%','기본요금의 0.2%','기본요금의 0.5%','전력량요금의 0.2%'],a:1,e:'제43조 제2항 제1호: 미달하는 역률 60%까지 매 1%당 기본요금의 0.2%를 추가합니다.'},
+ {d:'기본공급약관',q:'22시~다음 날 08시에는 어떤 역률에 대해 요금을 추가하며 기준은 몇 %인가?',o:['지상역률 92%','진상역률 95%','지상역률 95%','진상역률 90%'],a:1,e:'제43조 제2항 제2호: 진상역률에 대하여 적용하며, 평균역률이 95%에 미달하면 매 1%당 기본요금의 0.2%를 추가합니다.'},
+ {d:'기본공급약관',q:'저압으로 공급받는 고객 중 역률 요금 추가·감액 대상이 되는 계약전력 기준은?',o:['5kW 이상','10kW 이상','20kW 이상','50kW 이상'],a:2,e:'제43조 제1항 제1호: 저압으로 공급받는 계약전력 20kW 이상의 일반용·산업용·농사용·임시전력.'},
+ {d:'기본공급약관',q:'무효전력을 계량할 수 있는 전력량계가 없는 고객의 역률은 얼마로 보는가?',o:['지상역률 90%','지상역률 92%','진상역률 95%','역률 100%'],a:1,e:'제42조 제1항: 전기를 사용하지 않은 달의 역률과 무효전력 계량 전력량계가 없는 고객의 역률은 지상역률 92%로 봅니다.'},
+ {d:'기본공급약관',q:'요금 계산 시 ‘변압기설비’의 계산단위는?',o:['1W','1VA','1kW','1kVA'],a:1,e:'제7조(끝수 계산): 사용설비 1W, 변압기설비 1VA, 계약전력 1kW, 사용전력량 1kWh, 무효전력량 1kVarh. 계산단위 미만은 반올림합니다.'},
+ {d:'기본공급약관',q:'요금을 납기일 이후에 낼 때 처음 1개월의 연체료 계산식은?',o:['미납요금 × 1.5% × 연체일수/월력일수','미납요금 × 2% × 연체일수/30','미납요금 × 3%','미납요금 × 0.5% × 연체일수'],a:0,e:'제75조(연체료): 처음 1개월은 미납요금 × 1.5% × 연체일수 ÷ 월력일수로 계산합니다.'},
+ {d:'기본공급약관',q:'임시전력(갑)에 해당하는 계약전력은?',o:['3kW 이하','5kW 이하','10kW 이하','20kW 이하'],a:0,e:'제64조(임시전력) 제2항: 임시전력(갑)은 계약전력 3kW 이하의 고객입니다.'},
+ {d:'기본공급약관',q:'정기검침일이 아닌 날에 검침할 수 있는 경우로 옳은 것은?',o:['고객이 요청한 경우','정기검침일이 공휴일인 경우','요금이 많이 나온 경우','계량기가 신형인 경우'],a:1,e:'제69조(검침일): 정기검침일이 공휴일이거나 비상재해 등 부득이한 경우 다른 날에 검침할 수 있습니다.'},
+ {d:'기본공급약관',q:'전기사용자가 바뀌면 새로운 고객과 이전 고객은 며칠 이내에 한전에 알려야 하는가?',o:['7일','10일','14일','30일'],a:2,e:'제12조(전기사용계약자의 변경) 제1항: 14일 이내에 한전에 알리고, 새로운 고객은 계약자 변경 신청을 해야 합니다.'},
+ // 전기계기업무기준 (2026.6.25, 15차)
+ {d:'전기계기업무기준',q:'검정에 합격한 계기라도 사용할 수 있는 ‘사용공차’는 검정공차의 몇 배인가?',o:['1.0배','1.2배','1.5배','2.0배'],a:2,e:'전력량계 검정: 대통령령이 정하는 사용공차 범위 내 제품만 사용하며 사용공차는 검정공차의 1.5배를 적용합니다.'},
+ {d:'전기계기업무기준',q:'전자식 전력량계(단독계기, 일반형) 3상의 검정 유효기간은?',o:['7년','8년','10년','13년'],a:1,e:'계량법 시행령 별표13: 전자식 일반형 단상 10년, 3상 8년.'},
+ {d:'전기계기업무기준',q:'전자식 전력량계(단독계기, 특수형) 단상의 검정 유효기간은?',o:['10년','12년','13년','15년'],a:2,e:'특수형(2015.1.1부터 적용): 단상 13년, 3상 10년.'},
+ {d:'전기계기업무기준',q:'유도형 전력량계(4형 계기)의 검정 유효기간은?',o:['7년','10년','12년','15년'],a:3,e:'유도형 전력량계(4형계기에 한정): 15년. 그 밖의 전력량계는 7년입니다.'},
+ {d:'전기계기업무기준',q:'CT일체형 계기는 최대 몇 A 부하까지 계량할 수 있는가?',o:['60A','100A','200A','400A'],a:2,e:'변성기 유무에 따른 분류: CT일체형 계기는 저압 단독계기와 CT를 일체화하여 최대 200A 부하까지 계량합니다.'},
+ {d:'전기계기업무기준',q:'AMI의 정식 명칭으로 옳은 것은?',o:['Automatic Meter Inspection','Advanced Metering Infrastructure','Analog Meter Interface','Active Measurement Instrument'],a:1,e:'5.4.3 차세대 전력계량 인프라(AMI: Advanced Metering Infrastructure).'},
+ {d:'전기계기업무기준',q:'계기용변압기(PT)의 영문 명칭은?',o:['Power Transformer','Potential Transformer','Phase Transformer','Pulse Transmitter'],a:1,e:'계기용변압기(PT: Potential Transformer), 계기용변류기(CT: Current Transformer).'},
+ {d:'전기계기업무기준',q:'정밀·특별정밀전력량계는 무엇과 조합하여 주로 고압·특고압에서 사용되는가?',o:['계기용 변성기','누전차단기','전력용 콘덴서','서지흡수기'],a:0,e:'정밀전력량계는 계기용 변성기와 조합하여 고압·특별고압 대용량 수용가에 사용합니다.'},
+ // 분산형전원 계량장치 시설지침 (2025.9.2, 5차)
+ {d:'분산형전원 계량장치 시설지침',q:'자가용 설비 전력구입계약의 설비용량 범위는?',o:['10kW 이하','10kW 초과~1,000kW 이하','1,000kW 초과','100kW 초과~3,000kW 이하'],a:1,e:'자가용 설비(설비용량 10kW 초과~1,000kW 이하)로 생산한 잉여전력을 한전과 직접 거래하는 유형입니다.'},
+ {d:'분산형전원 계량장치 시설지침',q:'요금상계거래 대상 신재생 설비 용량(태양광 제외)은?',o:['3kW 이하','10kW 이하','50kW 이하','100kW 이하'],a:1,e:'요금상계거래: 동일 장소의 10kW 이하 신·재생에너지 발전설비(태양에너지는 1,000kW 이하) 설치자가 자가소비 후 잉여전력을 거래합니다.'},
+ {d:'분산형전원 계량장치 시설지침',q:'태양광 외 자가용 설비의 ‘잉여전력’ 기준은?',o:['연간 총발전량의 30% 미만','연간 총발전량의 50% 미만','연간 총발전량의 70% 미만','제한 없음'],a:1,e:'잉여전력: 태양에너지 설비는 자가소비 후 남는 전력, 그 외 설비는 연간 총발전량의 50% 미만의 전력.'},
+ {d:'분산형전원 계량장치 시설지침',q:'분산형전원 계량장치 시설의 원칙은?',o:['수전과 역송전력 합산 계량','수전과 역송전력 구분 계량','역송전력만 계량','수전전력만 계량'],a:1,e:'2.2.2: 계량장치 시설에 있어 수전과 역송전력을 구분계량함을 원칙으로 합니다.'},
+ {d:'분산형전원 계량장치 시설지침',q:'소내 전력을 계량하기 위한 수전용 전력계량장치의 소유자는?',o:['발전고객','한전','전기안전공사','시공업체'],a:1,e:'2.2.1: 수전용 전력계량장치는 한전이 소유하며, 역송용 전력량계는 계약유형에 따라 다릅니다.'},
+ // 배전선로 이설업무 기준 (2025.8.29, 20차)
+ {d:'배전선로 이설업무 기준',q:'배전선로 이설공사비 부담의 법적 근거가 되는 법 조항은?',o:['전기사업법 제72조','전기안전관리법 제10조','도로법 제40조','전기공사업법 제12조'],a:0,e:'공사비 부담의 일반원칙: 법적 근거는 전기사업법 제72조이며, 이설 원인을 유발한 자가 부담하도록 규정합니다.'},
+ {d:'배전선로 이설업무 기준',q:'도로공사로 인한 배전선로 이설비용 부담주체 판정에 주로 인용되는 규정은?',o:['도로법 제64조(원인자부담금)','전기사업법 제29조','건축법 제11조','국토계획법 제56조'],a:0,e:'결정사례: 도로공사로 인한 이설은 도로법 제64조(원인자부담금) 및 제65조 제2항에 따라 사업시행자가 부담합니다.'},
+ {d:'배전선로 이설업무 기준',q:'배전선로 이설업무 기준의 적용범위는?',o:['한전 자체 계획에 의한 이설','고객의 신청에 의한 배전선로 이설업무','송전선로 이설','변전소 이전'],a:1,e:'적용범위: 이 기준은 고객의 신청에 의한 배전선로 이설업무에 적용합니다.'},
+ {d:'배전선로 이설업무 기준',q:'이설 신청 고객이 담당자·부담금·공사 진행상태 등을 확인할 수 있도록 안내하는 채널은?',o:['한전ON 홈페이지','전기안전공사 앱','국토부 민원24','조달청 나라장터'],a:0,e:'접수 담당자는 한전ON 홈페이지에서 담당자, 고객시설부담금, 공사 진행상태, 준공예정일 등을 확인할 수 있음을 안내합니다.'},
+ {d:'배전선로 이설업무 기준',q:'이설공사비 일부를 요청자 부담으로 운영하는 주된 이유는?',o:['한전 수익 증대','무분별한 전력설비 이설 방지','공사기간 단축','민원 감소'],a:1,e:'공사비 부담의 일반원칙: 요청자 부담 운영의 주된 이유는 무분별한 전력설비 이설을 방지하기 위함입니다(수익자 부담 관점).'},
+ // 영업업무처리지침 (2026.2)
+ {d:'영업업무처리지침',q:'전기사용계약자의 명의는 무엇을 기준으로 기재하는가?',o:['건물 소유자','실제 전기사용자','전기공사업체','관리사무소'],a:1,e:'전기사용계약자의 명의는 실제 전기사용자를 기준으로 전기사용신청서 및 계약변경 신청서에 기재합니다.'},
+ {d:'영업업무처리지침',q:'설계담당자는 외선공사 준공 후 며칠 이내에 공사준공 취득·정산을 완료해야 하는가?',o:['7일','14일','30일','60일'],a:2,e:'설계담당자는 외선공사가 준공된 후 30일 이내 공사준공 취득·정산을 완료합니다.'},
+ {d:'영업업무처리지침',q:'계기출고 후 설비점검은 언제까지 실시하는가?',o:['출고 당일','출고 후 3일 이내','출고 후 7일 이내','출고 후 30일 이내'],a:2,e:'계기출고 및 설비점검: 점검은 전기계기 출고 후 7일 이내에 실시합니다.'}
+];
+(function(){ var docs=['전체']; BANK.forEach(function(b){ if(docs.indexOf(b.d)<0) docs.push(b.d); });
+  document.getElementById('qDoc').innerHTML = docs.map(function(d){return '<option>'+d+'</option>';}).join(''); })();
+
+var QZ = null;
+function startQuiz(){
+  var doc=document.getElementById('qDoc').value, n=+document.getElementById('qCount').value;
+  var pool = BANK.filter(function(b){ return doc==='전체'||b.d===doc; }).slice();
+  for(var i=pool.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+  QZ = { list: pool.slice(0,Math.min(n,pool.length)).map(function(q){
+          var idx=q.o.map(function(_,k){return k;}); for(var i=idx.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=idx[i];idx[i]=idx[j];idx[j]=t;}
+          return {d:q.d,q:q.q,e:q.e,o:idx.map(function(k){return q.o[k];}),a:idx.indexOf(q.a)}; }),
+         i:0, score:0, wrong:[] };
+  renderQ();
+}
+function renderQ(){
+  var box=document.getElementById('quizBox');
+  if(!QZ){ box.innerHTML='<div class="loading">‘새 퀴즈’를 누르면 시작합니다. 문제은행 '+BANK.length+'문항.</div>'; return; }
+  if(QZ.i>=QZ.list.length){
+    var p=Math.round(QZ.score/QZ.list.length*100);
+    box.innerHTML='<div class="q-card"><div class="meta">결과</div><div class="score">'+QZ.score+' / '+QZ.list.length+' <span style="font-size:16px;color:#5b6170">('+p+'점)</span></div>'
+      + (QZ.wrong.length?'<div style="margin-top:12px"><b>틀린 문제 복습</b>'+QZ.wrong.map(function(w){return '<div class="explain"><div class="q-src">'+esc(w.d)+'</div><b>'+esc(w.q)+'</b><br>정답: '+esc(w.o[w.a])+'<br><span class="meta">'+esc(w.e)+'</span></div>';}).join('')+'</div>':'<div class="explain">모두 맞혔습니다!</div>')
+      + '<div style="margin-top:12px"><button class="btn" onclick="startQuiz()">다시 풀기</button></div></div>';
+    return;
+  }
+  var q=QZ.list[QZ.i];
+  box.innerHTML='<div class="q-card"><div class="row" style="justify-content:space-between"><span class="q-src">'+esc(q.d)+'</span><span class="meta">'+(QZ.i+1)+' / '+QZ.list.length+' · 맞힌 수 '+QZ.score+'</span></div>'
+    +'<div class="bar"><i style="width:'+(QZ.i/QZ.list.length*100)+'%"></i></div>'
+    +'<div class="q-text">Q. '+esc(q.q)+'</div>'
+    + q.o.map(function(o,k){return '<button class="opt" id="opt'+k+'" onclick="answer('+k+')">'+String.fromCharCode(9312+k)+' '+esc(o)+'</button>';}).join('')
+    +'<div id="qExp"></div></div>';
+}
+function answer(k){
+  var q=QZ.list[QZ.i]; if(q.done) return; q.done=true;
+  for(var i=0;i<q.o.length;i++){ var b=document.getElementById('opt'+i); b.disabled=true; if(i===q.a) b.classList.add('ok'); else if(i===k) b.classList.add('ng'); }
+  var ok=(k===q.a); if(ok) QZ.score++; else QZ.wrong.push(q);
+  document.getElementById('qExp').innerHTML='<div class="explain"><b>'+(ok?'정답입니다.':'오답입니다.')+'</b> '+esc(q.e)+'</div><div style="margin-top:10px;text-align:right"><button class="btn" onclick="QZ.i++;renderQ()">'+(QZ.i+1<QZ.list.length?'다음 문제':'결과 보기')+'</button></div>';
+}
+renderQ();
+init();
+</script>
+</body>
+</html>
