@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>배전공사 단가 대시보드</title>
+<meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root{--bg:#f4f5f7;--card:#fff;--ink:#14171c;--sub:#6b7280;--line:#e6e8ec;--brand:#1f4fd8;--soft:#eef3ff;--up:#d9442b;--down:#1f6fd8;--ok:#0f8a5f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,'Malgun Gothic',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1200px;margin:0 auto;padding:28px 20px 60px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+  h1{font-size:25px;margin:6px 0 4px;letter-spacing:-.6px}
+  .muted{color:var(--sub)}
+  .pill{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--brand);font-size:12px;font-weight:700}
+  .pill.gray{background:#f0f2f5;color:var(--sub)}
+  nav{display:flex;gap:6px;flex-wrap:wrap}
+  nav a{color:var(--sub);text-decoration:none;font-weight:700;padding:7px 12px;border-radius:8px;background:#fff;border:1px solid var(--line)}
+  nav a:hover{color:var(--brand);border-color:var(--brand)}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .full{grid-column:1/-1}
+  section{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;min-width:0}
+  .sec-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  h2{font-size:18px;margin:0;letter-spacing:-.3px;display:flex;align-items:center;gap:8px}
+  h2 .no{width:24px;height:24px;border-radius:7px;background:var(--brand);color:#fff;font-size:13px;display:inline-flex;align-items:center;justify-content:center}
+  h2 small{font-size:12px;color:var(--sub);font-weight:500}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px}
+  .kpi{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .kpi .n{font-size:12px;color:var(--sub);font-weight:700}
+  .kpi .v{font-size:19px;font-weight:800;margin:5px 0 2px;letter-spacing:-.4px}
+  .kpi .d{font-size:12px;font-weight:600}
+  .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--sub)}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:10px 13px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+  th{background:#fafbfc;font-size:12px;color:var(--sub);font-weight:700}
+  th small{display:block;font-weight:500}
+  td:first-child,th:first-child{text-align:left}
+  tr:last-child td{border-bottom:none}
+  .latest{background:var(--soft);font-weight:800}
+  th.latest{color:var(--brand)}
+  .code{color:var(--sub);font-size:12px;margin-left:6px;font-weight:500}
+  .note{font-size:12px;color:var(--sub);margin-top:10px;line-height:1.6}
+  .note a{color:var(--brand)}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{border:1px solid var(--brand);background:var(--brand);color:#fff;border-radius:9px;padding:8px 14px;font:inherit;font-weight:700;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.ghost{background:#fff;color:var(--brand)}
+  .btn:disabled{opacity:.55;cursor:wait}
+  .stamp{font-size:12px;color:var(--sub);background:#f6f7f9;border-radius:8px;padding:6px 10px}
+  .stamp b{color:var(--ink)}
+  .tabs{display:flex;gap:4px;background:#f0f2f5;padding:4px;border-radius:10px}
+  .tabs button{border:0;background:transparent;padding:6px 14px;border-radius:7px;font:inherit;font-weight:700;color:var(--sub);cursor:pointer}
+  .tabs button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  input[type=search],input[type=text]{border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;min-width:220px;flex:1}
+  input:focus{outline:2px solid var(--soft);border-color:var(--brand)}
+  .tools label{font-size:13px;color:var(--sub);display:flex;gap:6px;align-items:center;cursor:pointer}
+  .cell .p{font-weight:800}
+  .cell .q{display:block;font-size:11px;color:var(--sub)}
+  .cell.none{color:#c4c8d0}
+  .skeleton{height:110px;border-radius:12px;background:linear-gradient(90deg,#f0f2f5 25%,#e7eaef 37%,#f0f2f5 63%);background-size:400% 100%;animation:sh 1.4s infinite}
+  @keyframes sh{0%{background-position:100% 50%}100%{background-position:0 50%}}
+  .err{padding:14px;border-radius:12px;background:#fff4f2;color:#a3341f;line-height:1.6}
+  .warn{padding:10px 12px;border-radius:10px;background:#fff8e6;color:#8a5a00;font-size:12px;margin-bottom:10px}
+  .origin{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--soft);margin-bottom:12px;flex-wrap:wrap}
+  .origin b{color:var(--brand)}
+  .km{font-weight:800;color:var(--brand)}
+  .sato-list{display:grid;gap:8px}
+  .sato{display:grid;grid-template-columns:62px 1fr auto;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .sato .dist{text-align:center;font-weight:800;color:var(--brand);font-size:16px;line-height:1.1}
+  .sato .dist small{display:block;font-size:11px;color:var(--sub);font-weight:600}
+  .sato .t{font-weight:800}
+  .sato .a{color:var(--sub);font-size:13px;margin-top:2px}
+  .sato .m{font-size:12px;color:var(--sub);margin-top:4px}
+  .sato a.go{font-size:12px;font-weight:700;color:var(--brand);text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px;white-space:nowrap}
+  footer{text-align:center;font-size:12px;color:var(--sub);margin-top:6px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  @media (max-width:600px){h1{font-size:21px}.sato{grid-template-columns:52px 1fr}.sato a.go{grid-column:2}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <span class="pill">배전공사 · 순환골재 · 사토장 · 엔지니어링</span>
+      <h1>배전공사 단가 대시보드</h1>
+      <div class="muted" id="today"></div>
+    </div>
+    <nav><a href="#labor">① 노임단가</a><a href="#agg">② 순환골재</a><a href="#sato">③ 사토장</a><a href="#eng">④ 엔지니어링</a></nav>
+  </header>
+
+  <div class="grid">
+    <!-- ① 노임단가 -->
+    <section id="labor" class="full">
+      <div class="sec-head">
+        <h2><span class="no">1</span>배전공사 노임단가 <small>대한건설협회 · 최근 2개년 · 원/일</small></h2>
+        <span class="pill" id="laborLatest"></span>
+      </div>
+      <div id="laborBody"><div class="skeleton"></div></div>
+    </section>
+
+    <!-- ③ 사토장 -->
+    <section id="sato">
+      <div class="sec-head">
+        <h2><span class="no">3</span>근처 사토장 찾기 <small>토석정보공유시스템 목록 기준</small></h2>
+      </div>
+      <div class="tools">
+        <input type="text" id="addr" placeholder="예) 대구 달서구 성서공단로 11길 62">
+        <button class="btn" id="satoBtn">🔍 찾기</button>
+      </div>
+      <div id="satoBody"><div class="note">주소를 입력하면 입력지 위치와 가까운 사토장, 직선거리를 보여드려요.</div></div>
+    </section>
+
+    <!-- ④ 엔지니어링 -->
+    <section id="eng">
+      <div class="sec-head">
+        <h2><span class="no">4</span>엔지니어링 노임단가 <small>전기부문 · 숙련기술자</small></h2>
+        <button class="btn ghost" id="engBtn">↻ 최신 불러오기</button>
+      </div>
+      <div id="engBody"><div class="skeleton"></div></div>
+    </section>
+
+    <!-- ② 순환골재 -->
+    <section id="agg" class="full">
+      <div class="sec-head">
+        <h2><span class="no">2</span>순환골재 단가 <small>한국건설자원협회</small></h2>
+        <div class="bar">
+          <span class="stamp" id="aggStamp">불러온 날짜 확인 중…</span>
+          <button class="btn" id="aggBtn">↻ 새로 불러오기</button>
+        </div>
+      </div>
+      <div class="tools">
+        <div class="tabs" id="tabs"></div>
+        <input type="search" id="q" placeholder="업체명 또는 시·군 검색">
+        <label><input type="checkbox" id="onlyPrice" checked> 단가 등록 업체만</label>
+      </div>
+      <div id="aggBody"><div class="skeleton"></div></div>
+    </section>
+  </div>
+
+  <footer>자료: 대한건설협회 · 한국건설자원협회 · 토석정보공유시스템 · 한국엔지니어링협회 — 계약·설계에 적용하기 전 원문을 꼭 확인하세요.</footer>
+</div>
+
+<script>
+  /* ====================================================================
+     ★ 설정: Apps Script 웹앱 주소(…/exec)를 따옴표 안에 붙여넣으세요 ★
+     ==================================================================== */
+  var API_URL = '';
+
+  function call(action, params){
+    if (!API_URL) return Promise.reject(new Error('API_URL이 비어 있어요. index.html 안의 API_URL에 Apps Script 웹앱 주소를 넣어 주세요.'));
+    var q = '?api=' + encodeURIComponent(action);
+    Object.keys(params || {}).forEach(function(k){ q += '&' + k + '=' + encodeURIComponent(params[k]); });
+    return fetch(API_URL + q).then(function(r){ return r.json(); }).then(function(j){ if (!j.ok) throw new Error(j.error); return j.data; });
+  }
+  var won = function(n){ return n == null || n === '' ? '-' : Number(n).toLocaleString('ko-KR'); };
+  var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); };
+  var pct = function(a,b){ var d=(a-b)/b*100; return {v:d, cls:d>0?'up':d<0?'down':'flat', txt:(d>0?'▲ ':d<0?'▼ ':'– ')+Math.abs(d).toFixed(2)+'%'}; };
+  var $ = function(id){ return document.getElementById(id); };
+  function fail(boxId){ return function(e){ $(boxId).innerHTML = '<div class="err">' + esc(e.message || e) + '</div>'; }; }
+  $('today').textContent = new Date().toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) + ' 기준';
+
+  /* ---------- ① 노임단가 ---------- */
+  function renderLabor(d){
+    $('laborLatest').textContent = '최신 ' + d.periods[0].label + ' (' + d.periods[0].date + ' 적용)';
+    var h = '<div class="kpis">';
+    d.jobs.forEach(function(j){
+      var p = pct(j.rates[0], j.rates[1]);
+      h += '<div class="kpi"><div class="n">' + esc(j.name) + '</div><div class="v">' + won(j.rates[0]) + '<span style="font-size:12px"> 원</span></div><div class="d ' + p.cls + '">' + p.txt + ' <span class="muted" style="font-weight:500">전 반기 대비</span></div></div>';
+    });
+    h += '</div><div class="tbl-wrap"><table><thead><tr><th>직종</th>';
+    d.periods.forEach(function(p,i){ h += '<th class="' + (i?'':'latest') + '">' + p.label + '<small>' + p.date + '</small></th>'; });
+    h += '<th>전년 동기 대비</th></tr></thead><tbody>';
+    d.jobs.forEach(function(j){
+      h += '<tr><td><b>' + esc(j.name) + '</b><span class="code">' + j.code + '</span></td>';
+      j.rates.forEach(function(r,i){ h += '<td class="' + (i?'':'latest') + '">' + won(r) + '</td>'; });
+      var y = pct(j.rates[0], j.rates[2]);
+      h += '<td class="' + y.cls + '">' + (y.v>0?'+':'') + y.v.toFixed(2) + '%</td></tr>';
+    });
+    h += '</tbody></table></div><div class="note">출처: ' + esc(d.source) + ' · 1일 8시간 기준 · 다음 공표: ' + esc(d.nextRelease) + '</div>';
+    $('laborBody').innerHTML = h;
+  }
+
+  /* ---------- ② 순환골재 ---------- */
+  var AGG = null, cur = 0;
+  function renderTabs(){
+    $('tabs').innerHTML = AGG.areas.map(function(a,i){ return '<button class="' + (i===cur?'on':'') + '" data-i="' + i + '">' + esc(a.name) + '</button>'; }).join('');
+    Array.prototype.forEach.call($('tabs').children, function(b){ b.onclick = function(){ cur = +b.dataset.i; renderTabs(); renderAgg(); }; });
+  }
+  function renderAgg(){
+    $('aggStamp').innerHTML = '마지막 불러온 날짜 <b>' + esc(AGG.fetchedAt) + '</b>';
+    var a = AGG.areas[cur], box = $('aggBody');
+    if (a.error){ box.innerHTML = '<div class="err"><b>' + esc(a.name) + ' 자료를 불러오지 못했어요.</b><br>' + esc(a.error) + '<br><a href="' + a.url + '" target="_blank">협회 사이트에서 직접 보기 →</a></div>'; return; }
+    var q = $('q').value.trim(), only = $('onlyPrice').checked, cols = AGG.columns;
+    var rows = a.rows.filter(function(r){
+      if (q && (r.company + r.region).indexOf(q) === -1) return false;
+      if (only && !r.items.some(function(it){ return it.price; })) return false;
+      return true;
+    });
+    var h = '<div class="kpis">';
+    cols.forEach(function(c,i){
+      var ps = a.rows.map(function(r){ return r.items[i].price; }).filter(Boolean);
+      var mn = Math.min.apply(null, ps), mx = Math.max.apply(null, ps);
+      var v = ps.length ? (mn === mx ? won(mn) : won(mn) + '~' + won(mx)) : '등록 없음';
+      h += '<div class="kpi"><div class="n">' + c + '</div><div class="v" style="font-size:16px">' + v + '</div><div class="d muted">' + ps.length + '개 업체 단가 등록</div></div>';
+    });
+    h += '</div><div class="tbl-wrap"><table><thead><tr><th>업체 <small>시·군</small></th>';
+    cols.forEach(function(c){ h += '<th>' + c + '<small>단가(원) / 보유량(톤)</small></th>'; });
+    h += '</tr></thead><tbody>';
+    if (!rows.length) h += '<tr><td colspan="7" style="text-align:center" class="muted">조건에 맞는 업체가 없어요.</td></tr>';
+    rows.forEach(function(r){
+      h += '<tr><td><b>' + esc(r.company) + '</b><span class="code">' + esc(r.region) + '</span></td>';
+      r.items.forEach(function(it){
+        if (!it.qty && !it.price) h += '<td class="cell none">–</td>';
+        else h += '<td class="cell"><span class="p">' + (it.price ? won(it.price) + '원' : '<span class="muted" style="font-weight:500">미등록</span>') + '</span><span class="q">' + won(it.qty) + '톤</span></td>';
+      });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div><div class="note">괄호 단가는 업체가 협회에 등록한 판매단가예요(운반비 포함 여부 등은 업체 확인 필요). <a href="' + a.url + '" target="_blank">원문 보기 →</a></div>';
+    box.innerHTML = h;
+  }
+  function gotAgg(d){ AGG = d; if (cur >= d.areas.length) cur = 0; renderTabs(); renderAgg(); $('aggBtn').disabled = false; $('aggBtn').textContent = '↻ 새로 불러오기'; }
+  $('aggBtn').onclick = function(){
+    this.disabled = true; this.textContent = '불러오는 중…'; $('aggBody').innerHTML = '<div class="skeleton"></div>';
+    call('aggRefresh').then(gotAgg).catch(function(e){ fail('aggBody')(e); $('aggBtn').disabled=false; $('aggBtn').textContent='↻ 새로 불러오기'; });
+  };
+  $('q').oninput = function(){ if (AGG) renderAgg(); };
+  $('onlyPrice').onchange = function(){ if (AGG) renderAgg(); };
+
+  /* ---------- ③ 사토장 ---------- */
+  function findSato(){
+    var v = $('addr').value.trim(); if (!v) { $('addr').focus(); return; }
+    $('satoBtn').disabled = true; $('satoBody').innerHTML = '<div class="skeleton"></div>';
+    call('sato', {addr: v}).then(renderSato).catch(function(e){ fail('satoBody')(e); $('satoBtn').disabled=false; });
+  }
+  function renderSato(d){
+    $('satoBtn').disabled = false;
+    var o = d.origin;
+    var h = '<div class="origin">📍 <span>입력지 <b>' + esc(o.formatted) + '</b></span><span class="muted" style="font-size:12px">(' + o.lat.toFixed(5) + ', ' + o.lng.toFixed(5) + ')</span></div>';
+    if (!d.total){
+      h += '<div class="warn">아직 사토장 목록이 비어 있어요. <a href="' + d.tocycleUrl + '" target="_blank">토석정보공유시스템</a>에서 사토장 목록을 복사해 <a href="' + d.sheetUrl + '" target="_blank">데이터 시트의 [사토장] 탭</a>에 붙여넣어 주세요.</div>';
+    } else if (!d.results.length){
+      h += '<div class="warn">반경 ' + d.maxKm + 'km 안에 등록된 사토장이 없어요. (전체 ' + d.total + '곳 중)</div>';
+    } else {
+      h += '<div class="sato-list">';
+      d.results.forEach(function(s){
+        var route = 'https://map.kakao.com/link/from/' + encodeURIComponent('입력지') + ',' + o.lat + ',' + o.lng + '/to/' + encodeURIComponent(s.name || '사토장') + ',' + s.lat + ',' + s.lng;
+        var meta = [s.soil, s.period, s.tel].filter(Boolean).map(esc).join(' · ');
+        h += '<div class="sato"><div class="dist">' + s.km + '<small>km</small></div><div><div class="t">' + esc(s.name || '(이름 없음)') + '</div><div class="a">' + esc(s.address) + '</div>' + (meta ? '<div class="m">' + meta + '</div>' : '') + '</div><a class="go" href="' + route + '" target="_blank">길찾기 →</a></div>';
+      });
+      h += '</div>';
+    }
+    h += '<div class="note">거리는 두 지점 사이의 <b>직선거리</b>예요 (실제 도로거리는 길찾기로 확인). 목록 관리: <a href="' + d.sheetUrl + '" target="_blank">데이터 시트</a> · 원본: <a href="' + d.tocycleUrl + '" target="_blank">토석정보공유시스템</a></div>';
+    $('satoBody').innerHTML = h;
+  }
+  $('satoBtn').onclick = findSato;
+  $('addr').onkeydown = function(e){ if (e.key === 'Enter') findSato(); };
+
+  /* ---------- ④ 엔지니어링 ---------- */
+  function renderEng(d){
+    $('engBtn').disabled = false; $('engBtn').textContent = '↻ 최신 불러오기';
+    var y0 = d.years[0], y1 = d.years[1];
+    var rows = [['중급숙련기술자', y0.mid, y1.mid], ['초급숙련기술자', y0.low, y1.low]];
+    var h = (d.error ? '<div class="warn">' + esc(d.error) + '</div>' : '');
+    h += '<div class="bar" style="margin-bottom:12px"><span class="stamp">불러온 날짜 <b>' + (d.fetchedAt ? esc(d.fetchedAt) : '아직 없음 (기본값)') + '</b></span><span class="stamp">최신 공표일 <b>' + esc(y0.published || '-') + '</b></span></div>';
+    h += '<div class="kpis">';
+    rows.forEach(function(r){ var p = pct(r[1], r[2]); h += '<div class="kpi"><div class="n">' + r[0] + ' (전기)</div><div class="v">' + won(r[1]) + '<span style="font-size:12px"> 원</span></div><div class="d ' + p.cls + '">' + p.txt + ' <span class="muted" style="font-weight:500">전년 대비</span></div></div>'; });
+    h += '</div><div class="tbl-wrap"><table><thead><tr><th>기술등급</th><th class="latest">' + y0.year + '년 적용<small>공표 ' + esc(y0.published) + '</small></th><th>' + y1.year + '년 적용<small>공표 ' + esc(y1.published) + '</small></th><th>증감률</th></tr></thead><tbody>';
+    rows.forEach(function(r){ var p = pct(r[1], r[2]); h += '<tr><td><b>' + r[0] + '</b></td><td class="latest">' + won(r[1]) + '</td><td>' + won(r[2]) + '</td><td class="' + p.cls + '">' + (p.v>0?'+':'') + p.v.toFixed(2) + '%</td></tr>'; });
+    h += '</tbody></table></div><div class="note">1인 1일 평균임금 · 월평균 근무일수 ' + esc(y0.days || '-') + '일 · 출처: ' + esc(d.source) + ' <a href="' + d.url + '" target="_blank">→</a></div>';
+    $('engBody').innerHTML = h;
+  }
+  $('engBtn').onclick = function(){
+    this.disabled = true; this.textContent = '불러오는 중…'; $('engBody').innerHTML = '<div class="skeleton"></div>';
+    call('engRefresh').then(renderEng).catch(function(e){ fail('engBody')(e); $('engBtn').disabled=false; $('engBtn').textContent='↻ 최신 불러오기'; });
+  };
+
+  /* ---------- API 연결 전에도 보이는 기본값 ---------- */
+  var LABOR_FALLBACK = {source:'대한건설협회 「2026년 하반기 적용 건설업 임금실태조사 보고서」',nextRelease:'2027. 1. 1 (예정)',
+    periods:[{label:'2026 하반기',date:'2026.09.01'},{label:'2026 상반기',date:'2026.01.01'},{label:'2025 하반기',date:'2025.09.01'},{label:'2025 상반기',date:'2025.01.01'}],
+    jobs:[{code:'1002',name:'보통인부',rates:[172698,172068,171037,169804]},{code:'1075',name:'내선전공',rates:[276108,273676,273539,268915]},
+      {code:'1076',name:'특고압케이블전공',rates:[444519,440616,439248,436458]},{code:'1078',name:'저압케이블전공',rates:[306274,304156,303632,300337]},
+      {code:'1081',name:'배전전공',rates:[420978,414968,413173,408559]},{code:'1082',name:'배전활선전공',rates:[562067,562439,560837,557881]}]};
+  var ENG_FALLBACK = {fetchedAt:null,source:'한국엔지니어링협회 엔지니어링업체 임금실태조사 (기본값)',url:'https://www.etis.or.kr',
+    years:[{year:'2026',published:'2025.12.2',days:'20.3',mid:246556,low:209640},{year:'2025',published:'2024.12.4',days:'20.5',mid:237151,low:197097}]};
+  if (!API_URL) document.querySelector('.wrap').insertAdjacentHTML('afterbegin','<div class="warn" style="font-size:13px">⚙️ 아직 Apps Script와 연결되지 않았어요. 노임단가는 기본값으로 보이고, 순환골재·사토장·최신 불러오기는 연결 후 작동해요.</div>');
+
+  /* ---------- 첫 화면 ---------- */
+  call('labor').then(renderLabor).catch(function(){ renderLabor(LABOR_FALLBACK); });
+  call('agg').then(gotAgg).catch(function(e){ fail('aggBody')(e); $('aggStamp').textContent = '연결 전'; });
+  call('eng').then(renderEng).catch(function(){ renderEng(ENG_FALLBACK); });
+</script>
+</body>
+</html>
