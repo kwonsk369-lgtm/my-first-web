@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF 병합 도구</title>
+
+<!-- PDF를 합치는 라이브러리(pdf-lib)를 인터넷(CDN)에서 불러옵니다 -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+
+<style>
+  /* ===== 기본 색상 정의 (파란색 계열 업무용) ===== */
+  :root {
+    --blue: #1d5fbf;          /* 포인트 파란색 */
+    --blue-dark: #164a96;     /* 버튼 눌렀을 때 진한 파란색 */
+    --blue-light: #eaf2fd;    /* 연한 파란색 배경 */
+    --blue-border: #a9c6f0;   /* 연한 파란 테두리 */
+    --text: #1f2937;          /* 기본 글자색 */
+    --muted: #6b7280;         /* 보조 글자색 */
+    --line: #e5e7eb;          /* 구분선 */
+    --bg: #f4f6f9;            /* 페이지 배경 */
+    --red: #d64545;           /* 삭제 버튼 색 */
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "맑은 고딕", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+    font-size: 15px;
+  }
+
+  /* ===== 상단 제목 영역 ===== */
+  header {
+    background: var(--blue);
+    color: #fff;
+    padding: 20px 16px;
+  }
+  header .inner { max-width: 820px; margin: 0 auto; }
+  header h1 { margin: 0; font-size: 22px; }
+  header p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
+
+  main { max-width: 820px; margin: 24px auto; padding: 0 16px; }
+
+  /* ===== 흰색 카드 상자 ===== */
+  .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 18px;
+  }
+
+  /* ===== 파일 끌어다 놓는 영역 (크게) ===== */
+  #dropZone {
+    border: 3px dashed var(--blue-border);
+    border-radius: 10px;
+    background: var(--blue-light);
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  #dropZone:hover { border-color: var(--blue); }
+  /* 파일을 끌고 영역 위에 올렸을 때 */
+  #dropZone.over { background: #d6e6fb; border-color: var(--blue); }
+  #dropZone .icon { font-size: 48px; line-height: 1; }
+  #dropZone .main-text { font-size: 18px; font-weight: bold; margin: 12px 0 4px; color: var(--blue-dark); }
+  #dropZone .sub-text { color: var(--muted); margin-bottom: 14px; }
+
+  /* ===== 버튼 공통 ===== */
+  button {
+    font-family: inherit;
+    font-size: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .btn-primary {
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    padding: 10px 22px;
+    font-weight: bold;
+  }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-primary:disabled { background: #a7b4c6; cursor: not-allowed; }
+
+  .btn-outline {
+    background: #fff;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .btn-outline:hover { border-color: var(--muted); color: var(--text); }
+
+  .btn-delete {
+    background: #fff;
+    color: var(--red);
+    border: 1px solid #f0c4c4;
+    padding: 6px 14px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .btn-delete:hover { background: #fdeeee; }
+
+  /* ===== 파일 목록 ===== */
+  .list-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .list-head h2 { margin: 0; font-size: 17px; }
+  .hint { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+
+  #fileList { list-style: none; margin: 0; padding: 0; }
+
+  #fileList li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background: #fff;
+    cursor: grab;
+    user-select: none;
+  }
+  #fileList li:hover { border-color: var(--blue-border); }
+  #fileList li.dragging { opacity: 0.4; }
+  /* 끌어서 놓을 위치 표시 (위/아래 파란 선) */
+  #fileList li.drop-before { box-shadow: 0 -3px 0 var(--blue); }
+  #fileList li.drop-after  { box-shadow: 0 3px 0 var(--blue); }
+
+  .handle { color: #9ca3af; font-size: 18px; }
+  .order {
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    flex-shrink: 0;
+  }
+  .file-info { flex: 1; min-width: 0; }
+  .file-name {
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .file-meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 28px 0;
+  }
+
+  /* ===== 병합 버튼 영역 ===== */
+  .actions { text-align: center; margin-top: 16px; }
+  .actions .btn-primary { font-size: 17px; padding: 14px 48px; }
+
+  /* ===== 안내 메시지 ===== */
+  #message {
+    display: none;
+    margin-top: 14px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  #message.info  { display: block; background: var(--blue-light); color: var(--blue-dark); }
+  #message.error { display: block; background: #fdeeee; color: #a33030; }
+
+  /* ===== "병합 중..." 화면 덮개 ===== */
+  #overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 100;
+  }
+  #overlay.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 5px solid var(--blue-light);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+  #overlay p { margin-top: 14px; font-size: 18px; font-weight: bold; color: var(--blue-dark); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 10px 16px 30px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <h1>PDF 병합 도구</h1>
+    <p>파일은 서버로 전송되지 않고, 내 컴퓨터(브라우저) 안에서만 처리됩니다.</p>
+  </div>
+</header>
+
+<main>
+  <!-- 1. 파일 추가 영역 -->
+  <div class="card">
+    <div id="dropZone" role="button" tabindex="0">
+      <div class="icon">📄</div>
+      <div class="main-text">PDF 파일을 이곳에 끌어다 놓으세요</div>
+      <div class="sub-text">또는 아래 버튼을 눌러 파일을 선택하세요 (여러 개 선택 가능)</div>
+      <button type="button" class="btn-primary" id="selectBtn">파일 선택</button>
+    </div>
+    <!-- 실제 파일 선택 창 (화면에는 숨김) -->
+    <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple hidden>
+  </div>
+
+  <!-- 2. 추가된 파일 목록 -->
+  <div class="card">
+    <div class="list-head">
+      <h2 id="listTitle">추가된 파일 (0개)</h2>
+      <button type="button" class="btn-outline" id="clearBtn">전체 삭제</button>
+    </div>
+    <p class="hint">목록의 파일을 마우스로 끌어서 순서를 바꿀 수 있습니다. 위에서부터 순서대로 합쳐집니다.</p>
+
+    <ul id="fileList"></ul>
+    <div class="empty" id="emptyMsg">아직 추가된 파일이 없습니다.</div>
+
+    <div class="actions">
+      <button type="button" class="btn-primary" id="mergeBtn" disabled>병합하기</button>
+    </div>
+    <div id="message"></div>
+  </div>
+</main>
+
+<footer>PDF 병합 도구 · 인터넷 연결 후 사용하세요 (처음 열 때 PDF 처리 기능을 불러옵니다)</footer>
+
+<!-- 처리 중 표시 -->
+<div id="overlay">
+  <div class="spinner"></div>
+  <p>병합 중...</p>
+</div>
+
+<script>
+  // ==========================================================
+  //  화면 요소 가져오기
+  // ==========================================================
+  const dropZone  = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const selectBtn = document.getElementById('selectBtn');
+  const fileList  = document.getElementById('fileList');
+  const emptyMsg  = document.getElementById('emptyMsg');
+  const listTitle = document.getElementById('listTitle');
+  const mergeBtn  = document.getElementById('mergeBtn');
+  const clearBtn  = document.getElementById('clearBtn');
+  const message   = document.getElementById('message');
+  const overlay   = document.getElementById('overlay');
+
+  // 추가된 파일들을 담아두는 목록
+  // 각 항목: { id: 고유번호, name: 파일명, size: 크기, bytes: 파일 내용, pageCount: 페이지 수 }
+  let files = [];
+  let nextId = 1;
+
+  // 목록에서 끌고 있는 항목의 고유번호 (끌고 있지 않으면 null)
+  let draggingId = null;
+
+  // ==========================================================
+  //  안내 메시지 표시
+  // ==========================================================
+  function showMessage(text, type) {
+    message.textContent = text;
+    message.className = type; // 'info' 또는 'error'
+  }
+  function hideMessage() {
+    message.className = '';
+    message.textContent = '';
+  }
+
+  // 파일 크기를 보기 좋게 바꾸기 (예: 1.2 MB)
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  // ==========================================================
+  //  파일 추가하기
+  // ==========================================================
+  async function addFiles(selectedFiles) {
+    // PDF 라이브러리가 불러와졌는지 확인 (인터넷이 끊겨 있으면 실패)
+    if (typeof PDFLib === 'undefined') {
+      showMessage('PDF 처리 기능을 불러오지 못했습니다. 인터넷 연결을 확인한 뒤 페이지를 새로고침해 주세요.', 'error');
+      return;
+    }
+
+    const all = Array.from(selectedFiles);
+    // PDF 파일만 골라내기
+    const pdfs = all.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+    const notPdfCount = all.length - pdfs.length;
+
+    const failed = [];     // 읽지 못한 파일
+    const locked = [];     // 암호가 걸린 파일
+
+    for (const file of pdfs) {
+      try {
+        // 파일 내용을 읽어오기
+        const bytes = await file.arrayBuffer();
+        // PDF로 열어서 페이지 수 확인
+        const doc = await PDFLib.PDFDocument.load(bytes, { ignoreEncryption: true });
+        if (doc.isEncrypted) {
+          locked.push(file.name);
+          continue;
+        }
+        files.push({
+          id: nextId++,
+          name: file.name,
+          size: file.size,
+          bytes: bytes,
+          pageCount: doc.getPageCount()
+        });
+      } catch (err) {
+        console.error(err);
+        failed.push(file.name);
+      }
+    }
+
+    render();
+
+    // 문제가 있었던 파일 안내
+    const problems = [];
+    if (notPdfCount > 0) problems.push(`PDF가 아닌 파일 ${notPdfCount}개는 제외했습니다.`);
+    if (locked.length > 0) problems.push(`암호가 걸린 파일은 합칠 수 없습니다: ${locked.join(', ')}`);
+    if (failed.length > 0) problems.push(`손상되었거나 읽을 수 없는 파일: ${failed.join(', ')}`);
+
+    if (problems.length > 0) {
+      showMessage(problems.join(' / '), 'error');
+    } else if (pdfs.length > 0) {
+      showMessage(`${pdfs.length}개 파일을 추가했습니다.`, 'info');
+    }
+  }
+
+  // ==========================================================
+  //  파일 목록 화면에 그리기
+  // ==========================================================
+  function render() {
+    fileList.innerHTML = '';
+
+    files.forEach((f, index) => {
+      const li = document.createElement('li');
+      li.draggable = true;
+      li.dataset.id = f.id;
+
+      // 끌기 손잡이 표시
+      const handle = document.createElement('span');
+      handle.className = 'handle';
+      handle.textContent = '☰';
+
+      // 순서 번호
+      const order = document.createElement('span');
+      order.className = 'order';
+      order.textContent = index + 1;
+
+      // 파일명과 페이지 수
+      const info = document.createElement('div');
+      info.className = 'file-info';
+      const name = document.createElement('div');
+      name.className = 'file-name';
+      name.textContent = f.name;      // 파일명은 글자 그대로 표시
+      name.title = f.name;            // 마우스를 올리면 전체 이름 표시
+      const meta = document.createElement('div');
+      meta.className = 'file-meta';
+      meta.textContent = `${f.pageCount}쪽 · ${formatSize(f.size)}`;
+      info.append(name, meta);
+
+      // 삭제 버튼
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'btn-delete';
+      del.textContent = '삭제';
+      del.addEventListener('click', () => {
+        files = files.filter(x => x.id !== f.id);
+        hideMessage();
+        render();
+      });
+
+      li.append(handle, order, info, del);
+      addDragEvents(li);
+      fileList.appendChild(li);
+    });
+
+    // 전체 개수와 총 페이지 수 표시
+    const totalPages = files.reduce((sum, f) => sum + f.pageCount, 0);
+    listTitle.textContent = files.length > 0
+      ? `추가된 파일 (${files.length}개 · 총 ${totalPages}쪽)`
+      : '추가된 파일 (0개)';
+
+    emptyMsg.style.display = files.length === 0 ? 'block' : 'none';
+    clearBtn.style.display = files.length === 0 ? 'none' : 'inline-block';
+
+    // 2개 이상일 때만 병합 버튼 사용 가능
+    mergeBtn.disabled = files.length < 2;
+    mergeBtn.textContent = files.length === 1 ? '병합하기 (파일을 2개 이상 추가하세요)' : '병합하기';
+  }
+
+  // ==========================================================
+  //  목록 순서 바꾸기 (마우스로 끌기)
+  // ==========================================================
+  function clearDropMarks() {
+    fileList.querySelectorAll('li').forEach(el => el.classList.remove('drop-before', 'drop-after'));
+  }
+
+  function addDragEvents(li) {
+    // 끌기 시작
+    li.addEventListener('dragstart', (e) => {
+      draggingId = Number(li.dataset.id);
+      li.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', li.dataset.id); // 일부 브라우저에서 필요
+    });
+
+    // 끌기 끝
+    li.addEventListener('dragend', () => {
+      draggingId = null;
+      li.classList.remove('dragging');
+      clearDropMarks();
+    });
+
+    // 다른 항목 위로 끌고 지나갈 때: 위쪽 절반이면 앞에, 아래쪽 절반이면 뒤에 놓기
+    li.addEventListener('dragover', (e) => {
+      if (draggingId === null) return; // 바깥에서 파일을 끌어온 경우는 무시
+      e.preventDefault();
+      const rect = li.getBoundingClientRect();
+      const isTop = e.clientY < rect.top + rect.height / 2;
+      clearDropMarks();
+      li.classList.add(isTop ? 'drop-before' : 'drop-after');
+    });
+
+    // 놓았을 때 순서 바꾸기
+    li.addEventListener('drop', (e) => {
+      if (draggingId === null) return; // 바깥 파일은 페이지 전체 처리로 넘김
+      e.preventDefault();
+      e.stopPropagation();
+
+      const targetId = Number(li.dataset.id);
+      if (targetId !== draggingId) {
+        const rect = li.getBoundingClientRect();
+        const isTop = e.clientY < rect.top + rect.height / 2;
+
+        // 끌고 있던 항목을 목록에서 빼낸 뒤, 대상 위치 앞/뒤에 다시 넣기
+        const fromIndex = files.findIndex(f => f.id === draggingId);
+        const [moved] = files.splice(fromIndex, 1);
+        let toIndex = files.findIndex(f => f.id === targetId);
+        if (!isTop) toIndex += 1;
+        files.splice(toIndex, 0, moved);
+      }
+      draggingId = null;
+      render();
+    });
+  }
+
+  // ==========================================================
+  //  파일 선택 버튼 / 끌어다 놓기
+  // ==========================================================
+  // 영역이나 버튼을 누르면 파일 선택 창 열기
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+  selectBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // 영역 클릭과 중복 실행 방지
+    fileInput.click();
+  });
+
+  // 파일 선택 창에서 고른 파일 추가
+  fileInput.addEventListener('change', () => {
+    addFiles(fileInput.files);
+    fileInput.value = ''; // 같은 파일을 다시 선택할 수 있도록 초기화
+  });
+
+  // 바깥에서 파일을 끌어오는 중인지 확인
+  function isFileDrag(e) {
+    return e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files');
+  }
+
+  // 끌어다 놓는 영역 강조 표시
+  dropZone.addEventListener('dragover', (e) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    dropZone.classList.add('over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+
+  // 페이지 어디에 놓아도 파일이 추가되도록 처리
+  // (이 처리가 없으면 브라우저가 PDF를 새 창으로 열어버립니다)
+  window.addEventListener('dragover', (e) => {
+    if (isFileDrag(e)) e.preventDefault();
+  });
+  window.addEventListener('drop', (e) => {
+    dropZone.classList.remove('over');
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    addFiles(e.dataTransfer.files);
+  });
+
+  // 전체 삭제
+  clearBtn.addEventListener('click', () => {
+    if (!confirm('목록의 모든 파일을 지울까요?')) return;
+    files = [];
+    hideMessage();
+    render();
+  });
+
+  // ==========================================================
+  //  병합하기
+  // ==========================================================
+  // 오늘 날짜를 "20261105" 형식으로 만들기
+  function todayString() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}${m}${day}`;
+  }
+
+  // 만든 PDF를 내 컴퓨터로 내려받기
+  function download(bytes, filename) {
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    // 잠시 후 임시 주소 정리
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  mergeBtn.addEventListener('click', async () => {
+    if (files.length < 2) return;
+
+    // "병합 중..." 표시를 켜고, 화면에 그려질 시간을 잠깐 줌
+    overlay.classList.add('show');
+    mergeBtn.disabled = true;
+    hideMessage();
+    await new Promise(r => setTimeout(r, 50));
+
+    try {
+      // 빈 PDF를 새로 만들고
+      const merged = await PDFLib.PDFDocument.create();
+
+      // 목록 순서대로 각 파일의 모든 페이지를 복사해서 붙이기
+      for (const f of files) {
+        const src = await PDFLib.PDFDocument.load(f.bytes);
+        const pages = await merged.copyPages(src, src.getPageIndices());
+        pages.forEach(page => merged.addPage(page));
+      }
+
+      // 완성된 PDF 저장 후 다운로드
+      const result = await merged.save();
+      const filename = `병합_${todayString()}.pdf`;
+      download(result, filename);
+
+      showMessage(`완료되었습니다. "${filename}" 파일이 다운로드 폴더에 저장됩니다. (총 ${merged.getPageCount()}쪽)`, 'info');
+    } catch (err) {
+      console.error(err);
+      showMessage('병합 중 오류가 발생했습니다. 손상된 파일이 있는지 확인해 주세요. (오류 내용: ' + err.message + ')', 'error');
+    } finally {
+      // "병합 중..." 표시 끄기
+      overlay.classList.remove('show');
+      mergeBtn.disabled = files.length < 2;
+    }
+  });
+
+  // 처음 화면 그리기
+  render();
+</script>
+</body>
+</html>
